@@ -4,52 +4,30 @@ OBJCOPY	:= avr-objcopy
 OBJDUMP	:= avr-objdump
 SIZE	:= avr-size
 
-TARGET = twiboot
+TARGET = bootloader
 SOURCE = $(wildcard *.c)
 
 # select MCU
-MCU = atmega88
+MCU = atmega328pb
 
 AVRDUDE_PROG := -c avr910 -b 115200 -P /dev/ttyUSB0
 #AVRDUDE_PROG := -c dragon_isp -P usb
 
 # ---------------------------------------------------------------------------
 
-ifeq ($(MCU), atmega8)
+ifeq ($(MCU), atmega328pb)
 # (8Mhz internal RC-Osz., 2.7V BOD)
-AVRDUDE_MCU=m8
-AVRDUDE_FUSES=lfuse:w:0x84:m hfuse:w:0xda:m
-
-BOOTLOADER_START=0x1C00
-endif
-
-ifeq ($(MCU), atmega88)
-# (8Mhz internal RC-Osz., 2.7V BOD)
-AVRDUDE_MCU=m88
-AVRDUDE_FUSES=lfuse:w:0xc2:m hfuse:w:0xdd:m efuse:w:0xfa:m
-
-BOOTLOADER_START=0x1C00
-endif
-
-ifeq ($(MCU), atmega168)
-# (8Mhz internal RC-Osz., 2.7V BOD)
-AVRDUDE_MCU=m168 -F
-AVRDUDE_FUSES=lfuse:w:0xc2:m hfuse:w:0xdd:m efuse:w:0xfa:m
-
-BOOTLOADER_START=0x3C00
-endif
-
-ifeq ($(MCU), atmega328p)
-# (8Mhz internal RC-Osz., 2.7V BOD)
-AVRDUDE_MCU=m328p -F
+AVRDUDE_MCU=m328pb -F
 AVRDUDE_FUSES=lfuse:w:0xc2:m hfuse:w:0xdc:m efuse:w:0xfd:m
 
+#This places the code at the end of the flash
+#This is in bytes and the application section maps are in words (2bytes)
 BOOTLOADER_START=0x7C00
 endif
 
 # ---------------------------------------------------------------------------
 
-CFLAGS = -pipe -g -Os -mmcu=$(MCU) -Wall -fdata-sections -ffunction-sections
+CFLAGS = -pipe -g -Os -mmcu=$(MCU) -Wall -fdata-sections -ffunction-sections -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.132\gcc\dev\atmega328pb" -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.132\include"
 CFLAGS += -Wa,-adhlns=$(*F).lst -DBOOTLOADER_START=$(BOOTLOADER_START)
 LDFLAGS = -Wl,-Map,$(@:.elf=.map),--cref,--relax,--gc-sections,--section-start=.text=$(BOOTLOADER_START)
 

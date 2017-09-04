@@ -1,0 +1,2000 @@
+   1               	 .file "main.c"
+   2               	__SP_H__ =0x3e
+   3               	__SP_L__ =0x3d
+   4               	__SREG__ =0x3f
+   5               	__tmp_reg__ =0
+   6               	__zero_reg__ =1
+   7               	 .text
+   8               	.Ltext0:
+   9               	 .cfi_sections .debug_frame
+  10               	 .section .text.__vector_40,"ax",@progbits
+  11               	.global __vector_40
+  13               	__vector_40:
+  14               	.LFB107:
+  15               	 .file 1 "main.c"
+   1:main.c        **** /***************************************************************************
+   2:main.c        ****  *   Copyright (C) 08/2010 by Olaf Rempel                                  *
+   3:main.c        ****  *   razzor@kopf-tisch.de                                                  *
+   4:main.c        ****  *                                                                         *
+   5:main.c        ****  *   This program is free software; you can redistribute it and/or modify  *
+   6:main.c        ****  *   it under the terms of the GNU General Public License as published by  *
+   7:main.c        ****  *   the Free Software Foundation; version 2 of the License,               *
+   8:main.c        ****  *                                                                         *
+   9:main.c        ****  *   This program is distributed in the hope that it will be useful,       *
+  10:main.c        ****  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+  11:main.c        ****  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+  12:main.c        ****  *   GNU General Public License for more details.                          *
+  13:main.c        ****  *                                                                         *
+  14:main.c        ****  *   You should have received a copy of the GNU General Public License     *
+  15:main.c        ****  *   along with this program; if not, write to the                         *
+  16:main.c        ****  *   Free Software Foundation, Inc.,                                       *
+  17:main.c        ****  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+  18:main.c        ****  ***************************************************************************/
+  19:main.c        **** #include <avr/io.h>
+  20:main.c        **** #include <avr/interrupt.h>
+  21:main.c        **** #include <avr/boot.h>
+  22:main.c        **** #include <avr/pgmspace.h>
+  23:main.c        **** #include "port_init.h"
+  24:main.c        **** 
+  25:main.c        **** /*
+  26:main.c        ****  * atmega328pb:
+  27:main.c        ****  * Fuse E: 0xfd (2.7V BOD)
+  28:main.c        ****  * Fuse H: 0xd4 (512 words bootloader)
+  29:main.c        ****  * Fuse L: 0xc2 (8Mhz internal RC-Osz.)
+  30:main.c        ****  */
+  31:main.c        **** 
+  32:main.c        **** #if defined (__AVR_ATmega328PB__)
+  33:main.c        **** //#define VERSION_STRING		"TWIBOOTm328v2.1"
+  34:main.c        **** #define VERSION_STRING		"MDBOOT328PBv2.1"
+  35:main.c        **** #define SIGNATURE_BYTES		0x1E, 0x95, 0x16
+  36:main.c        **** 
+  37:main.c        **** #else
+  38:main.c        **** #error MCU not supported
+  39:main.c        **** #endif
+  40:main.c        **** 
+  41:main.c        **** #define EEPROM_SUPPORT		0
+  42:main.c        **** #define LED_SUPPORT		    1
+  43:main.c        **** 
+  44:main.c        **** /* 25ms @8MHz */
+  45:main.c        **** #define TIMER_RELOAD		(0xFF - 195)
+  46:main.c        **** 
+  47:main.c        **** /* 40 * 25ms */
+  48:main.c        **** #define TIMEOUT			40
+  49:main.c        **** 
+  50:main.c        **** #if LED_SUPPORT
+  51:main.c        **** #define LED_INIT()		  LED_set_dir(PORT_DIR_OUT);
+  52:main.c        **** #define LED_RT_ON()		  LED_set_level(false);
+  53:main.c        **** #define LED_RT_OFF()      LED_set_level(true);
+  54:main.c        **** #define LED_GN_OFF()	  LED_set_level(true);
+  55:main.c        **** #define LED_GN_ON()		  LED_set_level(false);
+  56:main.c        **** #define LED_GN_TOGGLE()	  LED_toggle_level();
+  57:main.c        **** #define LED_OFF()		  LED_set_level(true);
+  58:main.c        **** #else
+  59:main.c        **** #define LED_INIT()
+  60:main.c        **** #define LED_RT_ON()
+  61:main.c        **** #define LED_RT_OFF()
+  62:main.c        **** #define LED_GN_ON()
+  63:main.c        **** #define LED_GN_OFF()
+  64:main.c        **** #define LED_GN_TOGGLE()
+  65:main.c        **** #define LED_OFF()
+  66:main.c        **** #endif
+  67:main.c        **** 
+  68:main.c        **** #ifndef TWI_ADDRESS
+  69:main.c        **** // This is so the firmware can be updated "in-service"
+  70:main.c        **** // The chain will need to be rebooted once the firmware has reloaded
+  71:main.c        **** // unless we store the last boot (before firmware update) I2C address 
+  72:main.c        **** // in EEPROM. This could be set to only load once.
+  73:main.c        **** #define TWI_ADDRESS		0x07 // I2C "Reserved for future purposes"
+  74:main.c        **** #endif
+  75:main.c        **** 
+  76:main.c        **** /* SLA+R */
+  77:main.c        **** #define CMD_WAIT		0x00
+  78:main.c        **** #define CMD_READ_VERSION	0x01
+  79:main.c        **** #define CMD_READ_MEMORY		0x02
+  80:main.c        **** /* internal mappings */
+  81:main.c        **** #define CMD_READ_CHIPINFO	(0x10 | CMD_READ_MEMORY)
+  82:main.c        **** #define CMD_READ_FLASH		(0x20 | CMD_READ_MEMORY)
+  83:main.c        **** #define CMD_READ_EEPROM		(0x30 | CMD_READ_MEMORY)
+  84:main.c        **** #define CMD_READ_PARAMETERS	(0x40 | CMD_READ_MEMORY)	/* only in APP */
+  85:main.c        **** 
+  86:main.c        **** /* SLA+W */
+  87:main.c        **** #define CMD_SWITCH_APPLICATION	CMD_READ_VERSION
+  88:main.c        **** #define CMD_WRITE_MEMORY	CMD_READ_MEMORY
+  89:main.c        **** /* internal mappings */
+  90:main.c        **** #define CMD_BOOT_BOOTLOADER	(0x10 | CMD_SWITCH_APPLICATION)	/* only in APP */
+  91:main.c        **** #define CMD_BOOT_APPLICATION	(0x20 | CMD_SWITCH_APPLICATION)
+  92:main.c        **** #define CMD_WRITE_CHIPINFO	(0x10 | CMD_WRITE_MEMORY)	/* invalid */
+  93:main.c        **** #define CMD_WRITE_FLASH		(0x20 | CMD_WRITE_MEMORY)
+  94:main.c        **** #define CMD_WRITE_EEPROM	(0x30 | CMD_WRITE_MEMORY)
+  95:main.c        **** #define CMD_WRITE_PARAMETERS	(0x40 | CMD_WRITE_MEMORY)	/* only in APP */
+  96:main.c        **** 
+  97:main.c        **** /* CMD_SWITCH_APPLICATION parameter */
+  98:main.c        **** #define BOOTTYPE_BOOTLOADER	0x00				/* only in APP */
+  99:main.c        **** #define BOOTTYPE_APPLICATION	0x80
+ 100:main.c        **** 
+ 101:main.c        **** /* CMD_{READ|WRITE}_* parameter */
+ 102:main.c        **** #define MEMTYPE_CHIPINFO	0x00
+ 103:main.c        **** #define MEMTYPE_FLASH		0x01
+ 104:main.c        **** #define MEMTYPE_EEPROM		0x02
+ 105:main.c        **** #define MEMTYPE_PARAMETERS	0x03				/* only in APP */
+ 106:main.c        **** 
+ 107:main.c        **** /*
+ 108:main.c        ****  * LED_GN blinks with 20Hz (while bootloader is running)
+ 109:main.c        ****  * LED_RT blinks on TWI activity
+ 110:main.c        ****  *
+ 111:main.c        ****  * bootloader twi-protocol:
+ 112:main.c        ****  * - abort boot timeout:
+ 113:main.c        ****  *   SLA+W, 0x00, STO
+ 114:main.c        ****  *
+ 115:main.c        ****  * - show bootloader version
+ 116:main.c        ****  *   SLA+W, 0x01, SLA+R, {16 bytes}, STO
+ 117:main.c        ****  *
+ 118:main.c        ****  * - start application
+ 119:main.c        ****  *   SLA+W, 0x01, 0x80, STO
+ 120:main.c        ****  *
+ 121:main.c        ****  * - read chip info: 3byte signature, 1byte page size, 2byte flash size, 2byte eeprom size
+ 122:main.c        ****  *   SLA+W, 0x02, 0x00, 0x00, 0x00, SLA+R, {4 bytes}, STO
+ 123:main.c        ****  *
+ 124:main.c        ****  * - read one (or more) flash bytes
+ 125:main.c        ****  *   SLA+W, 0x02, 0x01, addrh, addrl, SLA+R, {* bytes}, STO
+ 126:main.c        ****  *
+ 127:main.c        ****  * - read one (or more) eeprom bytes
+ 128:main.c        ****  *   SLA+W, 0x02, 0x02, addrh, addrl, SLA+R, {* bytes}, STO
+ 129:main.c        ****  *
+ 130:main.c        ****  * - write one flash page (64bytes on mega8)
+ 131:main.c        ****  *   SLA+W, 0x02, 0x01, addrh, addrl, {64 bytes}, STO
+ 132:main.c        ****  *
+ 133:main.c        ****  * - write one (or more) eeprom bytes
+ 134:main.c        ****  *   SLA+W, 0x02, 0x02, addrh, addrl, {* bytes}, STO
+ 135:main.c        ****  */
+ 136:main.c        **** 
+ 137:main.c        **** const static uint8_t info[16] = VERSION_STRING;
+ 138:main.c        **** const static uint8_t chipinfo[8] = {
+ 139:main.c        **** 	SIGNATURE_BYTES,
+ 140:main.c        **** 
+ 141:main.c        **** 	SPM_PAGESIZE,
+ 142:main.c        **** 
+ 143:main.c        **** 	(BOOTLOADER_START >> 8) & 0xFF,
+ 144:main.c        **** 	BOOTLOADER_START & 0xFF,
+ 145:main.c        **** #if (EEPROM_SUPPORT)
+ 146:main.c        **** 	((E2END +1) >> 8 & 0xFF),
+ 147:main.c        **** 	(E2END +1) & 0xFF
+ 148:main.c        **** #else
+ 149:main.c        **** 	0x00, 0x00
+ 150:main.c        **** #endif
+ 151:main.c        **** };
+ 152:main.c        **** 
+ 153:main.c        **** /* wait 40 * 25ms = 1s */
+ 154:main.c        **** static uint8_t boot_timeout = TIMEOUT;
+ 155:main.c        **** volatile static uint8_t cmd = CMD_WAIT;
+ 156:main.c        **** 
+ 157:main.c        **** /* flash buffer */
+ 158:main.c        **** static uint8_t buf[SPM_PAGESIZE];
+ 159:main.c        **** static uint16_t addr;
+ 160:main.c        **** 
+ 161:main.c        **** static void write_flash_page(void)
+ 162:main.c        **** {
+ 163:main.c        **** 	uint16_t pagestart = addr;
+ 164:main.c        **** 	uint8_t size = SPM_PAGESIZE;
+ 165:main.c        **** 	uint8_t *p = buf;
+ 166:main.c        **** 
+ 167:main.c        **** 	//Don't overwrite bootloader
+ 168:main.c        **** 	if (pagestart >= BOOTLOADER_START)
+ 169:main.c        **** 		return;
+ 170:main.c        **** 
+ 171:main.c        **** 	boot_page_erase(pagestart);
+ 172:main.c        **** 	boot_spm_busy_wait();
+ 173:main.c        **** 
+ 174:main.c        **** 	do {
+ 175:main.c        **** 		uint16_t data = *p++;
+ 176:main.c        **** 		data |= *p++ << 8;
+ 177:main.c        **** 		boot_page_fill(addr, data);
+ 178:main.c        **** 
+ 179:main.c        **** 		addr += 2;
+ 180:main.c        **** 		size -= 2;
+ 181:main.c        **** 	} while (size);
+ 182:main.c        **** 
+ 183:main.c        **** 	boot_page_write(pagestart);
+ 184:main.c        **** 	boot_spm_busy_wait();
+ 185:main.c        **** 	boot_rww_enable();
+ 186:main.c        **** }
+ 187:main.c        **** 
+ 188:main.c        **** #if (EEPROM_SUPPORT)
+ 189:main.c        **** static uint8_t read_eeprom_byte(void)
+ 190:main.c        **** {
+ 191:main.c        **** 	EEARL = addr;
+ 192:main.c        **** 	EEARH = (addr >> 8);
+ 193:main.c        **** 	EECR |= (1<<EERE);
+ 194:main.c        **** 	addr++;
+ 195:main.c        **** 	return EEDR;
+ 196:main.c        **** }
+ 197:main.c        **** 
+ 198:main.c        **** static void write_eeprom_byte(uint8_t val)
+ 199:main.c        **** {
+ 200:main.c        **** 	EEARL = addr;
+ 201:main.c        **** 	EEARH = (addr >> 8);
+ 202:main.c        **** 	EEDR = val;
+ 203:main.c        **** 	addr++;
+ 204:main.c        **** 
+ 205:main.c        **** 	EECR |= (1<<EEMPE);
+ 206:main.c        **** 	EECR |= (1<<EEPE);
+ 207:main.c        **** 
+ 208:main.c        **** 	eeprom_busy_wait();
+ 209:main.c        **** }
+ 210:main.c        **** #endif /* EEPROM_SUPPORT */
+ 211:main.c        **** 
+ 212:main.c        **** ISR(TWI1_vect)
+ 213:main.c        **** {
+  16               	 .loc 1 213 0
+  17               	 .cfi_startproc
+  18 0000 1F92      	 push r1
+  19               	.LCFI0:
+  20               	 .cfi_def_cfa_offset 3
+  21               	 .cfi_offset 1,-2
+  22 0002 0F92      	 push r0
+  23               	.LCFI1:
+  24               	 .cfi_def_cfa_offset 4
+  25               	 .cfi_offset 0,-3
+  26 0004 0FB6      	 in r0,__SREG__
+  27 0006 0F92      	 push r0
+  28 0008 1124      	 clr __zero_reg__
+  29 000a 2F93      	 push r18
+  30               	.LCFI2:
+  31               	 .cfi_def_cfa_offset 5
+  32               	 .cfi_offset 18,-4
+  33 000c 3F93      	 push r19
+  34               	.LCFI3:
+  35               	 .cfi_def_cfa_offset 6
+  36               	 .cfi_offset 19,-5
+  37 000e 4F93      	 push r20
+  38               	.LCFI4:
+  39               	 .cfi_def_cfa_offset 7
+  40               	 .cfi_offset 20,-6
+  41 0010 5F93      	 push r21
+  42               	.LCFI5:
+  43               	 .cfi_def_cfa_offset 8
+  44               	 .cfi_offset 21,-7
+  45 0012 6F93      	 push r22
+  46               	.LCFI6:
+  47               	 .cfi_def_cfa_offset 9
+  48               	 .cfi_offset 22,-8
+  49 0014 7F93      	 push r23
+  50               	.LCFI7:
+  51               	 .cfi_def_cfa_offset 10
+  52               	 .cfi_offset 23,-9
+  53 0016 8F93      	 push r24
+  54               	.LCFI8:
+  55               	 .cfi_def_cfa_offset 11
+  56               	 .cfi_offset 24,-10
+  57 0018 9F93      	 push r25
+  58               	.LCFI9:
+  59               	 .cfi_def_cfa_offset 12
+  60               	 .cfi_offset 25,-11
+  61 001a AF93      	 push r26
+  62               	.LCFI10:
+  63               	 .cfi_def_cfa_offset 13
+  64               	 .cfi_offset 26,-12
+  65 001c BF93      	 push r27
+  66               	.LCFI11:
+  67               	 .cfi_def_cfa_offset 14
+  68               	 .cfi_offset 27,-13
+  69 001e EF93      	 push r30
+  70               	.LCFI12:
+  71               	 .cfi_def_cfa_offset 15
+  72               	 .cfi_offset 30,-14
+  73 0020 FF93      	 push r31
+  74               	.LCFI13:
+  75               	 .cfi_def_cfa_offset 16
+  76               	 .cfi_offset 31,-15
+  77               	 
+  78               	 
+  79               	 
+  80               	.L__stack_usage =15
+  81               	.LVL0:
+ 214:main.c        **** 	static uint8_t bcnt;
+ 215:main.c        **** 	uint8_t data;
+ 216:main.c        **** 	uint8_t ack = (1<<TWEA);
+ 217:main.c        **** 
+ 218:main.c        **** 	switch (TWSR1 & 0xF8) {
+  82               	 .loc 1 218 0
+  83 0022 8091 D900 	 lds r24,217
+  84 0026 887F      	 andi r24,lo8(-8)
+  85 0028 883A      	 cpi r24,lo8(-88)
+  86 002a 01F4      	 brne .+2
+  87 002c 00C0      	 rjmp .L3
+  88 002e 00F4      	 brsh .L4
+  89 0030 8038      	 cpi r24,lo8(-128)
+  90 0032 01F0      	 breq .L5
+  91 0034 803A      	 cpi r24,lo8(-96)
+  92 0036 01F4      	 brne .+2
+  93 0038 00C0      	 rjmp .L6
+  94 003a 8036      	 cpi r24,lo8(96)
+  95 003c 01F0      	 breq .+2
+  96 003e 00C0      	 rjmp .L1
+ 219:main.c        **** 	/* SLA+W received, ACK returned -> receive data and ACK */
+ 220:main.c        **** 	case 0x60:
+ 221:main.c        **** 		bcnt = 0;
+  97               	 .loc 1 221 0
+  98 0040 1092 0000 	 sts bcnt.2192,__zero_reg__
+  99               	.LVL1:
+ 100               	.LBB24:
+ 101               	.LBB25:
+ 102               	.LBB26:
+ 103               	 .file 2 "port.h"
+   1:port.h        **** 
+   2:port.h        **** 
+   3:port.h        **** /**
+   4:port.h        ****  * \file
+   5:port.h        ****  *
+   6:port.h        ****  * \brief Port
+   7:port.h        ****  *
+   8:port.h        ****  *
+   9:port.h        ****  * Copyright (C) 2016 Atmel Corporation. All rights reserved.
+  10:port.h        ****  *
+  11:port.h        ****  * \asf_license_start
+  12:port.h        ****  *
+  13:port.h        ****  * \page License
+  14:port.h        ****  *
+  15:port.h        ****  * Redistribution and use in source and binary forms, with or without
+  16:port.h        ****  * modification, are permitted provided that the following conditions are met:
+  17:port.h        ****  *
+  18:port.h        ****  * 1. Redistributions of source code must retain the above copyright notice,
+  19:port.h        ****  *    this list of conditions and the following disclaimer.
+  20:port.h        ****  *
+  21:port.h        ****  * 2. Redistributions in binary form must reproduce the above copyright notice,
+  22:port.h        ****  *    this list of conditions and the following disclaimer in the documentation
+  23:port.h        ****  *    and/or other materials provided with the distribution.
+  24:port.h        ****  *
+  25:port.h        ****  * 3. The name of Atmel may not be used to endorse or promote products derived
+  26:port.h        ****  *    from this software without specific prior written permission.
+  27:port.h        ****  *
+  28:port.h        ****  * 4. This software may only be redistributed and used in connection with an
+  29:port.h        ****  *    Atmel microcontroller product.
+  30:port.h        ****  *
+  31:port.h        ****  * THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR IMPLIED
+  32:port.h        ****  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  33:port.h        ****  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
+  34:port.h        ****  * EXPRESSLY AND SPECIFICALLY DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR
+  35:port.h        ****  * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  36:port.h        ****  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+  37:port.h        ****  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+  38:port.h        ****  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+  39:port.h        ****  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+  40:port.h        ****  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  41:port.h        ****  * POSSIBILITY OF SUCH DAMAGE.
+  42:port.h        ****  *
+  43:port.h        ****  * \asf_license_stop
+  44:port.h        ****  *
+  45:port.h        ****  *
+  46:port.h        ****  */
+  47:port.h        **** 
+  48:port.h        **** #ifndef _PORT_INCLUDED_
+  49:port.h        **** #define _PORT_INCLUDED_
+  50:port.h        **** 
+  51:port.h        **** #ifdef __cplusplus
+  52:port.h        **** extern "C" {
+  53:port.h        **** #endif
+  54:port.h        **** 
+  55:port.h        **** #include <stdint.h>
+  56:port.h        **** #include <stdbool.h>
+  57:port.h        **** #include <avr/io.h>
+  58:port.h        **** 
+  59:port.h        **** enum port_pull_mode {
+  60:port.h        **** 	PORT_PULL_OFF,
+  61:port.h        **** 	PORT_PULL_UP,
+  62:port.h        **** };
+  63:port.h        **** 
+  64:port.h        **** enum port_dir {
+  65:port.h        **** 	PORT_DIR_IN,
+  66:port.h        **** 	PORT_DIR_OUT,
+  67:port.h        **** 	PORT_DIR_OFF,
+  68:port.h        **** };
+  69:port.h        **** 
+  70:port.h        **** /**
+  71:port.h        ****  * \brief Set PORTB pin pull mode
+  72:port.h        ****  *
+  73:port.h        ****  * Configure pin to pull up, down or disable pull mode, supported pull
+  74:port.h        ****  * modes are defined by device used
+  75:port.h        ****  *
+  76:port.h        ****  * \param[in] pin       The pin number in PORTB
+  77:port.h        ****  * \param[in] pull_mode Pin pull mode
+  78:port.h        ****  */
+  79:port.h        **** static inline void PORTB_set_pin_pull_mode(const uint8_t pin, const enum port_pull_mode pull_mode)
+  80:port.h        **** {
+  81:port.h        **** 
+  82:port.h        **** 	if (pull_mode == PORT_PULL_UP) {
+  83:port.h        **** 
+  84:port.h        **** 		DDRB &= ~(1 << pin);
+  85:port.h        **** 
+  86:port.h        **** 		PORTB |= 1 << pin;
+  87:port.h        **** 	} else if (pull_mode == PORT_PULL_OFF) {
+  88:port.h        **** 
+  89:port.h        **** 		PORTB &= ~(1 << pin);
+  90:port.h        **** 	}
+  91:port.h        **** }
+  92:port.h        **** 
+  93:port.h        **** /**
+  94:port.h        ****  * \brief Set PORTB data direction
+  95:port.h        ****  *
+  96:port.h        ****  * Select if the port pins selected by mask data direction is input, output
+  97:port.h        ****  * or disabled.
+  98:port.h        ****  *
+  99:port.h        ****  * \param[in] mask      Bit mask where 1 means apply direction setting to the
+ 100:port.h        ****  *                      corresponding pin
+ 101:port.h        ****  * \param[in] direction PORT_DIR_IN  = Data direction in
+ 102:port.h        ****  *                      PORT_DIR_OUT = Data direction out
+ 103:port.h        ****  *                      PORT_DIR_OFF = Disables the pin
+ 104:port.h        ****  *                      (low power state)
+ 105:port.h        ****  */
+ 106:port.h        **** static inline void PORTB_set_port_dir(const uint8_t mask, const enum port_dir direction)
+ 107:port.h        **** {
+ 108:port.h        **** 	switch (direction) {
+ 109:port.h        **** 	case PORT_DIR_IN:
+ 110:port.h        **** 		DDRB &= ~mask;
+ 111:port.h        **** 		break;
+ 112:port.h        **** 	case PORT_DIR_OUT:
+ 113:port.h        **** 		DDRB |= mask;
+ 114:port.h        **** 		break;
+ 115:port.h        **** 	case PORT_DIR_OFF:
+ 116:port.h        **** 		DDRB &= ~mask;
+ 117:port.h        **** 
+ 118:port.h        **** 		PORTB |= mask;
+ 119:port.h        **** 		break;
+ 120:port.h        **** 	default:
+ 121:port.h        **** 		break;
+ 122:port.h        **** 	}
+ 123:port.h        **** }
+ 124:port.h        **** 
+ 125:port.h        **** /**
+ 126:port.h        ****  * \brief Set PORTB single pin data direction
+ 127:port.h        ****  *
+ 128:port.h        ****  * Select if the pin data direction is input, output or disabled.
+ 129:port.h        ****  * If disabled state is not possible, this function throws an assert.
+ 130:port.h        ****  *
+ 131:port.h        ****  * \param[in] pin       The pin number within PORTB (0..7)
+ 132:port.h        ****  * \param[in] direction PORT_DIR_IN  = Data direction in
+ 133:port.h        ****  *                      PORT_DIR_OUT = Data direction out
+ 134:port.h        ****  *                      PORT_DIR_OFF = Disables the pin
+ 135:port.h        ****  *                      (low power state)
+ 136:port.h        ****  */
+ 137:port.h        **** static inline void PORTB_set_pin_dir(const uint8_t pin, const enum port_dir direction)
+ 138:port.h        **** {
+ 139:port.h        **** 	switch (direction) {
+ 140:port.h        **** 	case PORT_DIR_IN:
+ 141:port.h        **** 		DDRB &= ~(1 << pin);
+ 142:port.h        **** 		break;
+ 143:port.h        **** 	case PORT_DIR_OUT:
+ 144:port.h        **** 		DDRB |= 1 << pin;
+ 145:port.h        **** 		break;
+ 146:port.h        **** 	case PORT_DIR_OFF:
+ 147:port.h        **** 		DDRB |= ~(1 << pin);
+ 148:port.h        **** 
+ 149:port.h        **** 		PORTB |= 1 << pin;
+ 150:port.h        **** 		break;
+ 151:port.h        **** 	default:
+ 152:port.h        **** 		break;
+ 153:port.h        **** 	}
+ 154:port.h        **** }
+ 155:port.h        **** 
+ 156:port.h        **** /**
+ 157:port.h        ****  * \brief Set PORTB level
+ 158:port.h        ****  *
+ 159:port.h        ****  * Sets output level on the pins defined by the bit mask
+ 160:port.h        ****  *
+ 161:port.h        ****  * \param[in] mask  Bit mask where 1 means apply port level to the corresponding
+ 162:port.h        ****  *                  pin
+ 163:port.h        ****  * \param[in] level true  = Pin levels set to "high" state
+ 164:port.h        ****  *                  false = Pin levels set to "low" state
+ 165:port.h        ****  */
+ 166:port.h        **** static inline void PORTB_set_port_level(const uint8_t mask, const bool level)
+ 167:port.h        **** {
+ 168:port.h        **** 	if (level) {
+ 169:port.h        **** 		PORTB |= mask;
+ 170:port.h        **** 	} else {
+ 171:port.h        **** 		PORTB &= ~mask;
+ 172:port.h        **** 	}
+ 173:port.h        **** }
+ 174:port.h        **** 
+ 175:port.h        **** /**
+ 176:port.h        ****  * \brief Set PORTB level
+ 177:port.h        ****  *
+ 178:port.h        ****  * Sets output level on a pin
+ 179:port.h        ****  *
+ 180:port.h        ****  * \param[in] pin       The pin number for device
+ 181:port.h        ****  * \param[in] level true  = Pin level set to "high" state
+ 182:port.h        ****  *                  false = Pin level set to "low" state
+ 183:port.h        ****  */
+ 184:port.h        **** static inline void PORTB_set_pin_level(const uint8_t pin, const bool level)
+ 185:port.h        **** {
+ 186:port.h        **** 	if (level) {
+ 187:port.h        **** 		PORTB |= 1 << pin;
+ 188:port.h        **** 	} else {
+ 189:port.h        **** 		PORTB &= ~(1 << pin);
+ 190:port.h        **** 	}
+ 191:port.h        **** }
+ 192:port.h        **** 
+ 193:port.h        **** /**
+ 194:port.h        ****  * \brief Toggle out level on pins
+ 195:port.h        ****  *
+ 196:port.h        ****  * Toggle the pin levels on pins defined by bit mask
+ 197:port.h        ****  *
+ 198:port.h        ****  * \param[in] port  Ports are grouped into groups of maximum 32 pins,
+ 199:port.h        ****  *                  PORT_PORTA = group 0, PORT_PORTB = group 1, etc
+ 200:port.h        ****  * \param[in] mask  Bit mask where 1 means toggle pin level to the corresponding
+ 201:port.h        ****  *                  pin
+ 202:port.h        ****  */
+ 203:port.h        **** static inline void PORTB_toggle_port_level(const uint8_t mask)
+ 204:port.h        **** {
+ 205:port.h        **** 	PINB = mask;
+ 206:port.h        **** }
+ 207:port.h        **** 
+ 208:port.h        **** /**
+ 209:port.h        ****  * \brief Toggle output level on pin
+ 210:port.h        ****  *
+ 211:port.h        ****  * Toggle the pin levels on pin
+ 212:port.h        ****  *
+ 213:port.h        ****  * \param[in] pin       The pin number for device
+ 214:port.h        ****  */
+ 215:port.h        **** static inline void PORTB_toggle_pin_level(const uint8_t pin)
+ 216:port.h        **** {
+ 217:port.h        **** 	PINB = 1 << pin;
+ 218:port.h        **** }
+ 219:port.h        **** 
+ 220:port.h        **** /**
+ 221:port.h        ****  * \brief Get input level on pins
+ 222:port.h        ****  *
+ 223:port.h        ****  * Read the input level on pins connected to a port
+ 224:port.h        ****  *
+ 225:port.h        ****  * \param[in] port  Ports are grouped into groups of maximum 32 pins,
+ 226:port.h        ****  *                  PORT_PORTA = group 0, PORT_PORTB = group 1, etc
+ 227:port.h        ****  */
+ 228:port.h        **** static inline uint8_t PORTB_get_port_level(volatile uint8_t *port)
+ 229:port.h        **** {
+ 230:port.h        **** 	return PINB;
+ 231:port.h        **** }
+ 232:port.h        **** 
+ 233:port.h        **** /**
+ 234:port.h        ****  * \brief Get level on pin
+ 235:port.h        ****  *
+ 236:port.h        ****  * Reads the level on a pin connected to a port
+ 237:port.h        ****  *
+ 238:port.h        ****  * \param[in] pin       The pin number for device
+ 239:port.h        ****  */
+ 240:port.h        **** static inline bool PORTB_get_pin_level(const uint8_t pin)
+ 241:port.h        **** {
+ 242:port.h        **** 	return PINB & (1 << pin);
+ 243:port.h        **** }
+ 244:port.h        **** 
+ 245:port.h        **** /**
+ 246:port.h        ****  * \brief Write value to PORTB
+ 247:port.h        ****  *
+ 248:port.h        ****  * Write directly to the entire port register.
+ 249:port.h        ****  *
+ 250:port.h        ****  * \param[in] value   Value to write
+ 251:port.h        ****  */
+ 252:port.h        **** static inline void PORTB_write_port(const uint8_t value)
+ 253:port.h        **** {
+ 254:port.h        **** 	PORTB = value;
+ 255:port.h        **** }
+ 256:port.h        **** 
+ 257:port.h        **** /**
+ 258:port.h        ****  * \brief Set PORTC pin pull mode
+ 259:port.h        ****  *
+ 260:port.h        ****  * Configure pin to pull up, down or disable pull mode, supported pull
+ 261:port.h        ****  * modes are defined by device used
+ 262:port.h        ****  *
+ 263:port.h        ****  * \param[in] pin       The pin number in PORTC
+ 264:port.h        ****  * \param[in] pull_mode Pin pull mode
+ 265:port.h        ****  */
+ 266:port.h        **** static inline void PORTC_set_pin_pull_mode(const uint8_t pin, const enum port_pull_mode pull_mode)
+ 267:port.h        **** {
+ 268:port.h        **** 
+ 269:port.h        **** 	if (pull_mode == PORT_PULL_UP) {
+ 270:port.h        **** 
+ 271:port.h        **** 		DDRC &= ~(1 << pin);
+ 272:port.h        **** 
+ 273:port.h        **** 		PORTC |= 1 << pin;
+ 274:port.h        **** 	} else if (pull_mode == PORT_PULL_OFF) {
+ 275:port.h        **** 
+ 276:port.h        **** 		PORTC &= ~(1 << pin);
+ 277:port.h        **** 	}
+ 278:port.h        **** }
+ 279:port.h        **** 
+ 280:port.h        **** /**
+ 281:port.h        ****  * \brief Set PORTC data direction
+ 282:port.h        ****  *
+ 283:port.h        ****  * Select if the port pins selected by mask data direction is input, output
+ 284:port.h        ****  * or disabled.
+ 285:port.h        ****  *
+ 286:port.h        ****  * \param[in] mask      Bit mask where 1 means apply direction setting to the
+ 287:port.h        ****  *                      corresponding pin
+ 288:port.h        ****  * \param[in] direction PORT_DIR_IN  = Data direction in
+ 289:port.h        ****  *                      PORT_DIR_OUT = Data direction out
+ 290:port.h        ****  *                      PORT_DIR_OFF = Disables the pin
+ 291:port.h        ****  *                      (low power state)
+ 292:port.h        ****  */
+ 293:port.h        **** static inline void PORTC_set_port_dir(const uint8_t mask, const enum port_dir direction)
+ 294:port.h        **** {
+ 295:port.h        **** 	switch (direction) {
+ 296:port.h        **** 	case PORT_DIR_IN:
+ 297:port.h        **** 		DDRC &= ~mask;
+ 298:port.h        **** 		break;
+ 299:port.h        **** 	case PORT_DIR_OUT:
+ 300:port.h        **** 		DDRC |= mask;
+ 301:port.h        **** 		break;
+ 302:port.h        **** 	case PORT_DIR_OFF:
+ 303:port.h        **** 		DDRC &= ~mask;
+ 304:port.h        **** 
+ 305:port.h        **** 		PORTC |= mask;
+ 306:port.h        **** 		break;
+ 307:port.h        **** 	default:
+ 308:port.h        **** 		break;
+ 309:port.h        **** 	}
+ 310:port.h        **** }
+ 311:port.h        **** 
+ 312:port.h        **** /**
+ 313:port.h        ****  * \brief Set PORTC single pin data direction
+ 314:port.h        ****  *
+ 315:port.h        ****  * Select if the pin data direction is input, output or disabled.
+ 316:port.h        ****  * If disabled state is not possible, this function throws an assert.
+ 317:port.h        ****  *
+ 318:port.h        ****  * \param[in] pin       The pin number within PORTC (0..7)
+ 319:port.h        ****  * \param[in] direction PORT_DIR_IN  = Data direction in
+ 320:port.h        ****  *                      PORT_DIR_OUT = Data direction out
+ 321:port.h        ****  *                      PORT_DIR_OFF = Disables the pin
+ 322:port.h        ****  *                      (low power state)
+ 323:port.h        ****  */
+ 324:port.h        **** static inline void PORTC_set_pin_dir(const uint8_t pin, const enum port_dir direction)
+ 325:port.h        **** {
+ 326:port.h        **** 	switch (direction) {
+ 327:port.h        **** 	case PORT_DIR_IN:
+ 328:port.h        **** 		DDRC &= ~(1 << pin);
+ 329:port.h        **** 		break;
+ 330:port.h        **** 	case PORT_DIR_OUT:
+ 331:port.h        **** 		DDRC |= 1 << pin;
+ 332:port.h        **** 		break;
+ 333:port.h        **** 	case PORT_DIR_OFF:
+ 334:port.h        **** 		DDRC |= ~(1 << pin);
+ 335:port.h        **** 
+ 336:port.h        **** 		PORTC |= 1 << pin;
+ 337:port.h        **** 		break;
+ 338:port.h        **** 	default:
+ 339:port.h        **** 		break;
+ 340:port.h        **** 	}
+ 341:port.h        **** }
+ 342:port.h        **** 
+ 343:port.h        **** /**
+ 344:port.h        ****  * \brief Set PORTC level
+ 345:port.h        ****  *
+ 346:port.h        ****  * Sets output level on the pins defined by the bit mask
+ 347:port.h        ****  *
+ 348:port.h        ****  * \param[in] mask  Bit mask where 1 means apply port level to the corresponding
+ 349:port.h        ****  *                  pin
+ 350:port.h        ****  * \param[in] level true  = Pin levels set to "high" state
+ 351:port.h        ****  *                  false = Pin levels set to "low" state
+ 352:port.h        ****  */
+ 353:port.h        **** static inline void PORTC_set_port_level(const uint8_t mask, const bool level)
+ 354:port.h        **** {
+ 355:port.h        **** 	if (level) {
+ 356:port.h        **** 		PORTC |= mask;
+ 357:port.h        **** 	} else {
+ 358:port.h        **** 		PORTC &= ~mask;
+ 359:port.h        **** 	}
+ 360:port.h        **** }
+ 361:port.h        **** 
+ 362:port.h        **** /**
+ 363:port.h        ****  * \brief Set PORTC level
+ 364:port.h        ****  *
+ 365:port.h        ****  * Sets output level on a pin
+ 366:port.h        ****  *
+ 367:port.h        ****  * \param[in] pin       The pin number for device
+ 368:port.h        ****  * \param[in] level true  = Pin level set to "high" state
+ 369:port.h        ****  *                  false = Pin level set to "low" state
+ 370:port.h        ****  */
+ 371:port.h        **** static inline void PORTC_set_pin_level(const uint8_t pin, const bool level)
+ 372:port.h        **** {
+ 373:port.h        **** 	if (level) {
+ 374:port.h        **** 		PORTC |= 1 << pin;
+ 375:port.h        **** 	} else {
+ 376:port.h        **** 		PORTC &= ~(1 << pin);
+ 377:port.h        **** 	}
+ 378:port.h        **** }
+ 379:port.h        **** 
+ 380:port.h        **** /**
+ 381:port.h        ****  * \brief Toggle out level on pins
+ 382:port.h        ****  *
+ 383:port.h        ****  * Toggle the pin levels on pins defined by bit mask
+ 384:port.h        ****  *
+ 385:port.h        ****  * \param[in] port  Ports are grouped into groups of maximum 32 pins,
+ 386:port.h        ****  *                  PORT_PORTA = group 0, PORT_PORTB = group 1, etc
+ 387:port.h        ****  * \param[in] mask  Bit mask where 1 means toggle pin level to the corresponding
+ 388:port.h        ****  *                  pin
+ 389:port.h        ****  */
+ 390:port.h        **** static inline void PORTC_toggle_port_level(const uint8_t mask)
+ 391:port.h        **** {
+ 392:port.h        **** 	PINC = mask;
+ 393:port.h        **** }
+ 394:port.h        **** 
+ 395:port.h        **** /**
+ 396:port.h        ****  * \brief Toggle output level on pin
+ 397:port.h        ****  *
+ 398:port.h        ****  * Toggle the pin levels on pin
+ 399:port.h        ****  *
+ 400:port.h        ****  * \param[in] pin       The pin number for device
+ 401:port.h        ****  */
+ 402:port.h        **** static inline void PORTC_toggle_pin_level(const uint8_t pin)
+ 403:port.h        **** {
+ 404:port.h        **** 	PINC = 1 << pin;
+ 405:port.h        **** }
+ 406:port.h        **** 
+ 407:port.h        **** /**
+ 408:port.h        ****  * \brief Get input level on pins
+ 409:port.h        ****  *
+ 410:port.h        ****  * Read the input level on pins connected to a port
+ 411:port.h        ****  *
+ 412:port.h        ****  * \param[in] port  Ports are grouped into groups of maximum 32 pins,
+ 413:port.h        ****  *                  PORT_PORTA = group 0, PORT_PORTB = group 1, etc
+ 414:port.h        ****  */
+ 415:port.h        **** static inline uint8_t PORTC_get_port_level(volatile uint8_t *port)
+ 416:port.h        **** {
+ 417:port.h        **** 	return PINC;
+ 418:port.h        **** }
+ 419:port.h        **** 
+ 420:port.h        **** /**
+ 421:port.h        ****  * \brief Get level on pin
+ 422:port.h        ****  *
+ 423:port.h        ****  * Reads the level on a pin connected to a port
+ 424:port.h        ****  *
+ 425:port.h        ****  * \param[in] pin       The pin number for device
+ 426:port.h        ****  */
+ 427:port.h        **** static inline bool PORTC_get_pin_level(const uint8_t pin)
+ 428:port.h        **** {
+ 429:port.h        **** 	return PINC & (1 << pin);
+ 430:port.h        **** }
+ 431:port.h        **** 
+ 432:port.h        **** /**
+ 433:port.h        ****  * \brief Write value to PORTC
+ 434:port.h        ****  *
+ 435:port.h        ****  * Write directly to the entire port register.
+ 436:port.h        ****  *
+ 437:port.h        ****  * \param[in] value   Value to write
+ 438:port.h        ****  */
+ 439:port.h        **** static inline void PORTC_write_port(const uint8_t value)
+ 440:port.h        **** {
+ 441:port.h        **** 	PORTC = value;
+ 442:port.h        **** }
+ 443:port.h        **** 
+ 444:port.h        **** /**
+ 445:port.h        ****  * \brief Set PORTD pin pull mode
+ 446:port.h        ****  *
+ 447:port.h        ****  * Configure pin to pull up, down or disable pull mode, supported pull
+ 448:port.h        ****  * modes are defined by device used
+ 449:port.h        ****  *
+ 450:port.h        ****  * \param[in] pin       The pin number in PORTD
+ 451:port.h        ****  * \param[in] pull_mode Pin pull mode
+ 452:port.h        ****  */
+ 453:port.h        **** static inline void PORTD_set_pin_pull_mode(const uint8_t pin, const enum port_pull_mode pull_mode)
+ 454:port.h        **** {
+ 455:port.h        **** 
+ 456:port.h        **** 	if (pull_mode == PORT_PULL_UP) {
+ 457:port.h        **** 
+ 458:port.h        **** 		DDRD &= ~(1 << pin);
+ 459:port.h        **** 
+ 460:port.h        **** 		PORTD |= 1 << pin;
+ 461:port.h        **** 	} else if (pull_mode == PORT_PULL_OFF) {
+ 462:port.h        **** 
+ 463:port.h        **** 		PORTD &= ~(1 << pin);
+ 464:port.h        **** 	}
+ 465:port.h        **** }
+ 466:port.h        **** 
+ 467:port.h        **** /**
+ 468:port.h        ****  * \brief Set PORTD data direction
+ 469:port.h        ****  *
+ 470:port.h        ****  * Select if the port pins selected by mask data direction is input, output
+ 471:port.h        ****  * or disabled.
+ 472:port.h        ****  *
+ 473:port.h        ****  * \param[in] mask      Bit mask where 1 means apply direction setting to the
+ 474:port.h        ****  *                      corresponding pin
+ 475:port.h        ****  * \param[in] direction PORT_DIR_IN  = Data direction in
+ 476:port.h        ****  *                      PORT_DIR_OUT = Data direction out
+ 477:port.h        ****  *                      PORT_DIR_OFF = Disables the pin
+ 478:port.h        ****  *                      (low power state)
+ 479:port.h        ****  */
+ 480:port.h        **** static inline void PORTD_set_port_dir(const uint8_t mask, const enum port_dir direction)
+ 481:port.h        **** {
+ 482:port.h        **** 	switch (direction) {
+ 483:port.h        **** 	case PORT_DIR_IN:
+ 484:port.h        **** 		DDRD &= ~mask;
+ 485:port.h        **** 		break;
+ 486:port.h        **** 	case PORT_DIR_OUT:
+ 487:port.h        **** 		DDRD |= mask;
+ 488:port.h        **** 		break;
+ 489:port.h        **** 	case PORT_DIR_OFF:
+ 490:port.h        **** 		DDRD &= ~mask;
+ 491:port.h        **** 
+ 492:port.h        **** 		PORTD |= mask;
+ 493:port.h        **** 		break;
+ 494:port.h        **** 	default:
+ 495:port.h        **** 		break;
+ 496:port.h        **** 	}
+ 497:port.h        **** }
+ 498:port.h        **** 
+ 499:port.h        **** /**
+ 500:port.h        ****  * \brief Set PORTD single pin data direction
+ 501:port.h        ****  *
+ 502:port.h        ****  * Select if the pin data direction is input, output or disabled.
+ 503:port.h        ****  * If disabled state is not possible, this function throws an assert.
+ 504:port.h        ****  *
+ 505:port.h        ****  * \param[in] pin       The pin number within PORTD (0..7)
+ 506:port.h        ****  * \param[in] direction PORT_DIR_IN  = Data direction in
+ 507:port.h        ****  *                      PORT_DIR_OUT = Data direction out
+ 508:port.h        ****  *                      PORT_DIR_OFF = Disables the pin
+ 509:port.h        ****  *                      (low power state)
+ 510:port.h        ****  */
+ 511:port.h        **** static inline void PORTD_set_pin_dir(const uint8_t pin, const enum port_dir direction)
+ 512:port.h        **** {
+ 513:port.h        **** 	switch (direction) {
+ 514:port.h        **** 	case PORT_DIR_IN:
+ 515:port.h        **** 		DDRD &= ~(1 << pin);
+ 516:port.h        **** 		break;
+ 517:port.h        **** 	case PORT_DIR_OUT:
+ 518:port.h        **** 		DDRD |= 1 << pin;
+ 519:port.h        **** 		break;
+ 520:port.h        **** 	case PORT_DIR_OFF:
+ 521:port.h        **** 		DDRD |= ~(1 << pin);
+ 522:port.h        **** 
+ 523:port.h        **** 		PORTD |= 1 << pin;
+ 524:port.h        **** 		break;
+ 525:port.h        **** 	default:
+ 526:port.h        **** 		break;
+ 527:port.h        **** 	}
+ 528:port.h        **** }
+ 529:port.h        **** 
+ 530:port.h        **** /**
+ 531:port.h        ****  * \brief Set PORTD level
+ 532:port.h        ****  *
+ 533:port.h        ****  * Sets output level on the pins defined by the bit mask
+ 534:port.h        ****  *
+ 535:port.h        ****  * \param[in] mask  Bit mask where 1 means apply port level to the corresponding
+ 536:port.h        ****  *                  pin
+ 537:port.h        ****  * \param[in] level true  = Pin levels set to "high" state
+ 538:port.h        ****  *                  false = Pin levels set to "low" state
+ 539:port.h        ****  */
+ 540:port.h        **** static inline void PORTD_set_port_level(const uint8_t mask, const bool level)
+ 541:port.h        **** {
+ 542:port.h        **** 	if (level) {
+ 543:port.h        **** 		PORTD |= mask;
+ 544:port.h        **** 	} else {
+ 545:port.h        **** 		PORTD &= ~mask;
+ 546:port.h        **** 	}
+ 547:port.h        **** }
+ 548:port.h        **** 
+ 549:port.h        **** /**
+ 550:port.h        ****  * \brief Set PORTD level
+ 551:port.h        ****  *
+ 552:port.h        ****  * Sets output level on a pin
+ 553:port.h        ****  *
+ 554:port.h        ****  * \param[in] pin       The pin number for device
+ 555:port.h        ****  * \param[in] level true  = Pin level set to "high" state
+ 556:port.h        ****  *                  false = Pin level set to "low" state
+ 557:port.h        ****  */
+ 558:port.h        **** static inline void PORTD_set_pin_level(const uint8_t pin, const bool level)
+ 559:port.h        **** {
+ 560:port.h        **** 	if (level) {
+ 561:port.h        **** 		PORTD |= 1 << pin;
+ 562:port.h        **** 	} else {
+ 563:port.h        **** 		PORTD &= ~(1 << pin);
+ 564:port.h        **** 	}
+ 565:port.h        **** }
+ 566:port.h        **** 
+ 567:port.h        **** /**
+ 568:port.h        ****  * \brief Toggle out level on pins
+ 569:port.h        ****  *
+ 570:port.h        ****  * Toggle the pin levels on pins defined by bit mask
+ 571:port.h        ****  *
+ 572:port.h        ****  * \param[in] port  Ports are grouped into groups of maximum 32 pins,
+ 573:port.h        ****  *                  PORT_PORTA = group 0, PORT_PORTB = group 1, etc
+ 574:port.h        ****  * \param[in] mask  Bit mask where 1 means toggle pin level to the corresponding
+ 575:port.h        ****  *                  pin
+ 576:port.h        ****  */
+ 577:port.h        **** static inline void PORTD_toggle_port_level(const uint8_t mask)
+ 578:port.h        **** {
+ 579:port.h        **** 	PIND = mask;
+ 580:port.h        **** }
+ 581:port.h        **** 
+ 582:port.h        **** /**
+ 583:port.h        ****  * \brief Toggle output level on pin
+ 584:port.h        ****  *
+ 585:port.h        ****  * Toggle the pin levels on pin
+ 586:port.h        ****  *
+ 587:port.h        ****  * \param[in] pin       The pin number for device
+ 588:port.h        ****  */
+ 589:port.h        **** static inline void PORTD_toggle_pin_level(const uint8_t pin)
+ 590:port.h        **** {
+ 591:port.h        **** 	PIND = 1 << pin;
+ 592:port.h        **** }
+ 593:port.h        **** 
+ 594:port.h        **** /**
+ 595:port.h        ****  * \brief Get input level on pins
+ 596:port.h        ****  *
+ 597:port.h        ****  * Read the input level on pins connected to a port
+ 598:port.h        ****  *
+ 599:port.h        ****  * \param[in] port  Ports are grouped into groups of maximum 32 pins,
+ 600:port.h        ****  *                  PORT_PORTA = group 0, PORT_PORTB = group 1, etc
+ 601:port.h        ****  */
+ 602:port.h        **** static inline uint8_t PORTD_get_port_level(volatile uint8_t *port)
+ 603:port.h        **** {
+ 604:port.h        **** 	return PIND;
+ 605:port.h        **** }
+ 606:port.h        **** 
+ 607:port.h        **** /**
+ 608:port.h        ****  * \brief Get level on pin
+ 609:port.h        ****  *
+ 610:port.h        ****  * Reads the level on a pin connected to a port
+ 611:port.h        ****  *
+ 612:port.h        ****  * \param[in] pin       The pin number for device
+ 613:port.h        ****  */
+ 614:port.h        **** static inline bool PORTD_get_pin_level(const uint8_t pin)
+ 615:port.h        **** {
+ 616:port.h        **** 	return PIND & (1 << pin);
+ 617:port.h        **** }
+ 618:port.h        **** 
+ 619:port.h        **** /**
+ 620:port.h        ****  * \brief Write value to PORTD
+ 621:port.h        ****  *
+ 622:port.h        ****  * Write directly to the entire port register.
+ 623:port.h        ****  *
+ 624:port.h        ****  * \param[in] value   Value to write
+ 625:port.h        ****  */
+ 626:port.h        **** static inline void PORTD_write_port(const uint8_t value)
+ 627:port.h        **** {
+ 628:port.h        **** 	PORTD = value;
+ 629:port.h        **** }
+ 630:port.h        **** 
+ 631:port.h        **** /**
+ 632:port.h        ****  * \brief Set PORTE pin pull mode
+ 633:port.h        ****  *
+ 634:port.h        ****  * Configure pin to pull up, down or disable pull mode, supported pull
+ 635:port.h        ****  * modes are defined by device used
+ 636:port.h        ****  *
+ 637:port.h        ****  * \param[in] pin       The pin number in PORTE
+ 638:port.h        ****  * \param[in] pull_mode Pin pull mode
+ 639:port.h        ****  */
+ 640:port.h        **** static inline void PORTE_set_pin_pull_mode(const uint8_t pin, const enum port_pull_mode pull_mode)
+ 641:port.h        **** {
+ 642:port.h        **** 
+ 643:port.h        **** 	if (pull_mode == PORT_PULL_UP) {
+ 644:port.h        **** 
+ 645:port.h        **** 		DDRE &= ~(1 << pin);
+ 646:port.h        **** 
+ 647:port.h        **** 		PORTE |= 1 << pin;
+ 648:port.h        **** 	} else if (pull_mode == PORT_PULL_OFF) {
+ 649:port.h        **** 
+ 650:port.h        **** 		PORTE &= ~(1 << pin);
+ 651:port.h        **** 	}
+ 652:port.h        **** }
+ 653:port.h        **** 
+ 654:port.h        **** /**
+ 655:port.h        ****  * \brief Set PORTE data direction
+ 656:port.h        ****  *
+ 657:port.h        ****  * Select if the port pins selected by mask data direction is input, output
+ 658:port.h        ****  * or disabled.
+ 659:port.h        ****  *
+ 660:port.h        ****  * \param[in] mask      Bit mask where 1 means apply direction setting to the
+ 661:port.h        ****  *                      corresponding pin
+ 662:port.h        ****  * \param[in] direction PORT_DIR_IN  = Data direction in
+ 663:port.h        ****  *                      PORT_DIR_OUT = Data direction out
+ 664:port.h        ****  *                      PORT_DIR_OFF = Disables the pin
+ 665:port.h        ****  *                      (low power state)
+ 666:port.h        ****  */
+ 667:port.h        **** static inline void PORTE_set_port_dir(const uint8_t mask, const enum port_dir direction)
+ 668:port.h        **** {
+ 669:port.h        **** 	switch (direction) {
+ 670:port.h        **** 	case PORT_DIR_IN:
+ 671:port.h        **** 		DDRE &= ~mask;
+ 672:port.h        **** 		break;
+ 673:port.h        **** 	case PORT_DIR_OUT:
+ 674:port.h        **** 		DDRE |= mask;
+ 675:port.h        **** 		break;
+ 676:port.h        **** 	case PORT_DIR_OFF:
+ 677:port.h        **** 		DDRE &= ~mask;
+ 678:port.h        **** 
+ 679:port.h        **** 		PORTE |= mask;
+ 680:port.h        **** 		break;
+ 681:port.h        **** 	default:
+ 682:port.h        **** 		break;
+ 683:port.h        **** 	}
+ 684:port.h        **** }
+ 685:port.h        **** 
+ 686:port.h        **** /**
+ 687:port.h        ****  * \brief Set PORTE single pin data direction
+ 688:port.h        ****  *
+ 689:port.h        ****  * Select if the pin data direction is input, output or disabled.
+ 690:port.h        ****  * If disabled state is not possible, this function throws an assert.
+ 691:port.h        ****  *
+ 692:port.h        ****  * \param[in] pin       The pin number within PORTE (0..7)
+ 693:port.h        ****  * \param[in] direction PORT_DIR_IN  = Data direction in
+ 694:port.h        ****  *                      PORT_DIR_OUT = Data direction out
+ 695:port.h        ****  *                      PORT_DIR_OFF = Disables the pin
+ 696:port.h        ****  *                      (low power state)
+ 697:port.h        ****  */
+ 698:port.h        **** static inline void PORTE_set_pin_dir(const uint8_t pin, const enum port_dir direction)
+ 699:port.h        **** {
+ 700:port.h        **** 	switch (direction) {
+ 701:port.h        **** 	case PORT_DIR_IN:
+ 702:port.h        **** 		DDRE &= ~(1 << pin);
+ 703:port.h        **** 		break;
+ 704:port.h        **** 	case PORT_DIR_OUT:
+ 705:port.h        **** 		DDRE |= 1 << pin;
+ 706:port.h        **** 		break;
+ 707:port.h        **** 	case PORT_DIR_OFF:
+ 708:port.h        **** 		DDRE |= ~(1 << pin);
+ 709:port.h        **** 
+ 710:port.h        **** 		PORTE |= 1 << pin;
+ 711:port.h        **** 		break;
+ 712:port.h        **** 	default:
+ 713:port.h        **** 		break;
+ 714:port.h        **** 	}
+ 715:port.h        **** }
+ 716:port.h        **** 
+ 717:port.h        **** /**
+ 718:port.h        ****  * \brief Set PORTE level
+ 719:port.h        ****  *
+ 720:port.h        ****  * Sets output level on the pins defined by the bit mask
+ 721:port.h        ****  *
+ 722:port.h        ****  * \param[in] mask  Bit mask where 1 means apply port level to the corresponding
+ 723:port.h        ****  *                  pin
+ 724:port.h        ****  * \param[in] level true  = Pin levels set to "high" state
+ 725:port.h        ****  *                  false = Pin levels set to "low" state
+ 726:port.h        ****  */
+ 727:port.h        **** static inline void PORTE_set_port_level(const uint8_t mask, const bool level)
+ 728:port.h        **** {
+ 729:port.h        **** 	if (level) {
+ 730:port.h        **** 		PORTE |= mask;
+ 731:port.h        **** 	} else {
+ 732:port.h        **** 		PORTE &= ~mask;
+ 733:port.h        **** 	}
+ 734:port.h        **** }
+ 735:port.h        **** 
+ 736:port.h        **** /**
+ 737:port.h        ****  * \brief Set PORTE level
+ 738:port.h        ****  *
+ 739:port.h        ****  * Sets output level on a pin
+ 740:port.h        ****  *
+ 741:port.h        ****  * \param[in] pin       The pin number for device
+ 742:port.h        ****  * \param[in] level true  = Pin level set to "high" state
+ 743:port.h        ****  *                  false = Pin level set to "low" state
+ 744:port.h        ****  */
+ 745:port.h        **** static inline void PORTE_set_pin_level(const uint8_t pin, const bool level)
+ 746:port.h        **** {
+ 747:port.h        **** 	if (level) {
+ 748:port.h        **** 		PORTE |= 1 << pin;
+ 749:port.h        **** 	} else {
+ 750:port.h        **** 		PORTE &= ~(1 << pin);
+ 104               	 .loc 2 750 0
+ 105 0044 7398      	 cbi 0xe,3
+ 106               	.LVL2:
+ 107 0046 00C0      	 rjmp .L61
+ 108               	.L4:
+ 109               	.LBE26:
+ 110               	.LBE25:
+ 111               	.LBE24:
+ 218:main.c        **** 	/* SLA+W received, ACK returned -> receive data and ACK */
+ 112               	 .loc 1 218 0
+ 113 0048 803C      	 cpi r24,lo8(-64)
+ 114 004a 01F4      	 brne .+2
+ 115 004c 00C0      	 rjmp .L6
+ 116 004e 883F      	 cpi r24,lo8(-8)
+ 117 0050 01F4      	 brne .+2
+ 118 0052 00C0      	 rjmp .L8
+ 119 0054 883B      	 cpi r24,lo8(-72)
+ 120 0056 01F0      	 breq .+2
+ 121 0058 00C0      	 rjmp .L1
+ 122 005a 00C0      	 rjmp .L9
+ 123               	.L5:
+ 222:main.c        **** 		LED_RT_ON();
+ 223:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWEA);
+ 224:main.c        **** 		break;
+ 225:main.c        **** 
+ 226:main.c        **** 	/* prev. SLA+W, data received, ACK returned -> receive data and ACK */
+ 227:main.c        **** 	case 0x80:
+ 228:main.c        **** 		data = TWDR1;
+ 124               	 .loc 1 228 0
+ 125 005c 9091 DB00 	 lds r25,219
+ 126               	.LVL3:
+ 229:main.c        **** 		switch (bcnt) {
+ 127               	 .loc 1 229 0
+ 128 0060 8091 0000 	 lds r24,bcnt.2192
+ 129 0064 8130      	 cpi r24,lo8(1)
+ 130 0066 01F0      	 breq .L11
+ 131 0068 00F0      	 brlo .L12
+ 132 006a 8430      	 cpi r24,lo8(4)
+ 133 006c 00F4      	 brsh .L10
+ 230:main.c        **** 		case 0:
+ 231:main.c        **** 			switch (data) {
+ 232:main.c        **** 			case CMD_SWITCH_APPLICATION:
+ 233:main.c        **** 			case CMD_WRITE_MEMORY:
+ 234:main.c        **** 				bcnt++;
+ 235:main.c        **** 				/* no break */
+ 236:main.c        **** 
+ 237:main.c        **** 			case CMD_WAIT:
+ 238:main.c        **** 				/* abort countdown */
+ 239:main.c        **** 				boot_timeout = 0;
+ 240:main.c        **** 				break;
+ 241:main.c        **** 
+ 242:main.c        **** 			default:
+ 243:main.c        **** 				/* boot app now */
+ 244:main.c        **** 				cmd = CMD_BOOT_APPLICATION;
+ 245:main.c        **** 				ack = (0<<TWEA);
+ 246:main.c        **** 				break;
+ 247:main.c        **** 			}
+ 248:main.c        **** 			cmd = data;
+ 249:main.c        **** 			break;
+ 250:main.c        **** 
+ 251:main.c        **** 		case 1:
+ 252:main.c        **** 			switch (cmd) {
+ 253:main.c        **** 			case CMD_SWITCH_APPLICATION:
+ 254:main.c        **** 				if (data == BOOTTYPE_APPLICATION) {
+ 255:main.c        **** 					cmd = CMD_BOOT_APPLICATION;
+ 256:main.c        **** 				}
+ 257:main.c        **** 				ack = (0<<TWEA);
+ 258:main.c        **** 				break;
+ 259:main.c        **** 
+ 260:main.c        **** 			case CMD_WRITE_MEMORY:
+ 261:main.c        **** 				bcnt++;
+ 262:main.c        **** 				if (data == MEMTYPE_CHIPINFO) {
+ 263:main.c        **** 					cmd = CMD_WRITE_CHIPINFO;
+ 264:main.c        **** 
+ 265:main.c        **** 				} else if (data == MEMTYPE_FLASH) {
+ 266:main.c        **** 					cmd = CMD_WRITE_FLASH;
+ 267:main.c        **** #if (EEPROM_SUPPORT)
+ 268:main.c        **** 				} else if (data == MEMTYPE_EEPROM) {
+ 269:main.c        **** 					cmd = CMD_WRITE_EEPROM;
+ 270:main.c        **** #endif
+ 271:main.c        **** 				} else {
+ 272:main.c        **** 					ack = (0<<TWEA);
+ 273:main.c        **** 				}
+ 274:main.c        **** 				break;
+ 275:main.c        **** 
+ 276:main.c        **** 			default:
+ 277:main.c        **** 				ack = (0<<TWEA);
+ 278:main.c        **** 				break;
+ 279:main.c        **** 			}
+ 280:main.c        **** 			break;
+ 281:main.c        **** 
+ 282:main.c        **** 		case 2:
+ 283:main.c        **** 		case 3:
+ 284:main.c        **** 			addr <<= 8;
+ 285:main.c        **** 			addr |= data;
+ 134               	 .loc 1 285 0
+ 135 006e 20E0      	 ldi r18,0
+ 136 0070 30E0      	 ldi r19,0
+ 137 0072 3091 0000 	 lds r19,addr
+ 138 0076 292B      	 or r18,r25
+ 139 0078 3093 0000 	 sts addr+1,r19
+ 140 007c 2093 0000 	 sts addr,r18
+ 141 0080 00C0      	 rjmp .L58
+ 142               	.L12:
+ 231:main.c        **** 			case CMD_SWITCH_APPLICATION:
+ 143               	 .loc 1 231 0
+ 144 0082 9923      	 tst r25
+ 145 0084 01F0      	 breq .L15
+ 146 0086 9330      	 cpi r25,lo8(3)
+ 147 0088 00F4      	 brsh .L14
+ 234:main.c        **** 				/* no break */
+ 148               	 .loc 1 234 0
+ 149 008a 81E0      	 ldi r24,lo8(1)
+ 150 008c 8093 0000 	 sts bcnt.2192,r24
+ 151               	.L15:
+ 239:main.c        **** 				break;
+ 152               	 .loc 1 239 0
+ 153 0090 1092 0000 	 sts boot_timeout,__zero_reg__
+ 216:main.c        **** 
+ 154               	 .loc 1 216 0
+ 155 0094 80E4      	 ldi r24,lo8(64)
+ 240:main.c        **** 
+ 156               	 .loc 1 240 0
+ 157 0096 00C0      	 rjmp .L17
+ 158               	.L14:
+ 244:main.c        **** 				ack = (0<<TWEA);
+ 159               	 .loc 1 244 0
+ 160 0098 81E2      	 ldi r24,lo8(33)
+ 161 009a 8093 0000 	 sts cmd,r24
+ 162               	.LVL4:
+ 245:main.c        **** 				break;
+ 163               	 .loc 1 245 0
+ 164 009e 80E0      	 ldi r24,0
+ 165               	.LVL5:
+ 166               	.L17:
+ 248:main.c        **** 			break;
+ 167               	 .loc 1 248 0
+ 168 00a0 9093 0000 	 sts cmd,r25
+ 286:main.c        **** 			bcnt++;
+ 287:main.c        **** 			break;
+ 288:main.c        **** 
+ 289:main.c        **** 		default:
+ 290:main.c        **** 			switch (cmd) {
+ 291:main.c        **** 			case CMD_WRITE_FLASH:
+ 292:main.c        **** 				buf[bcnt -4] = data;
+ 293:main.c        **** 				if (bcnt < sizeof(buf) +3) {
+ 294:main.c        **** 					bcnt++;
+ 295:main.c        **** 				} else {
+ 296:main.c        **** 					write_flash_page();
+ 297:main.c        **** 					ack = (0<<TWEA);
+ 298:main.c        **** 				}
+ 299:main.c        **** 				break;
+ 300:main.c        **** #if (EEPROM_SUPPORT)
+ 301:main.c        **** 			case CMD_WRITE_EEPROM:
+ 302:main.c        **** 				write_eeprom_byte(data);
+ 303:main.c        **** 				bcnt++;
+ 304:main.c        **** 				break;
+ 305:main.c        **** #endif
+ 306:main.c        **** 			default:
+ 307:main.c        **** 				ack = (0<<TWEA);
+ 308:main.c        **** 				break;
+ 309:main.c        **** 			}
+ 310:main.c        **** 			break;
+ 311:main.c        **** 		}
+ 312:main.c        **** 
+ 313:main.c        **** 		if (ack == 0x00)
+ 169               	 .loc 1 313 0
+ 170 00a4 8823      	 tst r24
+ 171 00a6 01F4      	 brne .+2
+ 172 00a8 00C0      	 rjmp .L18
+ 173 00aa 00C0      	 rjmp .L19
+ 174               	.LVL6:
+ 175               	.L11:
+ 252:main.c        **** 			case CMD_SWITCH_APPLICATION:
+ 176               	 .loc 1 252 0
+ 177 00ac 8091 0000 	 lds r24,cmd
+ 178 00b0 8130      	 cpi r24,lo8(1)
+ 179 00b2 01F0      	 breq .L21
+ 180 00b4 8230      	 cpi r24,lo8(2)
+ 181 00b6 01F0      	 breq .L22
+ 182 00b8 00C0      	 rjmp .L18
+ 183               	.L21:
+ 254:main.c        **** 					cmd = CMD_BOOT_APPLICATION;
+ 184               	 .loc 1 254 0
+ 185 00ba 9038      	 cpi r25,lo8(-128)
+ 186 00bc 01F0      	 breq .+2
+ 187 00be 00C0      	 rjmp .L18
+ 255:main.c        **** 				}
+ 188               	 .loc 1 255 0
+ 189 00c0 81E2      	 ldi r24,lo8(33)
+ 190 00c2 8093 0000 	 sts cmd,r24
+ 191 00c6 00C0      	 rjmp .L18
+ 192               	.L22:
+ 261:main.c        **** 				if (data == MEMTYPE_CHIPINFO) {
+ 193               	 .loc 1 261 0
+ 194 00c8 8093 0000 	 sts bcnt.2192,r24
+ 262:main.c        **** 					cmd = CMD_WRITE_CHIPINFO;
+ 195               	 .loc 1 262 0
+ 196 00cc 9111      	 cpse r25,__zero_reg__
+ 197 00ce 00C0      	 rjmp .L24
+ 263:main.c        **** 
+ 198               	 .loc 1 263 0
+ 199 00d0 82E1      	 ldi r24,lo8(18)
+ 200 00d2 00C0      	 rjmp .L59
+ 201               	.L24:
+ 265:main.c        **** 					cmd = CMD_WRITE_FLASH;
+ 202               	 .loc 1 265 0
+ 203 00d4 9130      	 cpi r25,lo8(1)
+ 204 00d6 01F0      	 breq .+2
+ 205 00d8 00C0      	 rjmp .L18
+ 266:main.c        **** #if (EEPROM_SUPPORT)
+ 206               	 .loc 1 266 0
+ 207 00da 82E2      	 ldi r24,lo8(34)
+ 208               	.L59:
+ 209 00dc 8093 0000 	 sts cmd,r24
+ 210 00e0 00C0      	 rjmp .L25
+ 211               	.L10:
+ 290:main.c        **** 			case CMD_WRITE_FLASH:
+ 212               	 .loc 1 290 0
+ 213 00e2 2091 0000 	 lds r18,cmd
+ 214 00e6 2232      	 cpi r18,lo8(34)
+ 215 00e8 01F0      	 breq .+2
+ 216 00ea 00C0      	 rjmp .L18
+ 292:main.c        **** 				if (bcnt < sizeof(buf) +3) {
+ 217               	 .loc 1 292 0
+ 218 00ec E82F      	 mov r30,r24
+ 219 00ee F0E0      	 ldi r31,0
+ 220 00f0 E050      	 subi r30,lo8(-(buf-4))
+ 221 00f2 F040      	 sbci r31,hi8(-(buf-4))
+ 222 00f4 9083      	 st Z,r25
+ 293:main.c        **** 					bcnt++;
+ 223               	 .loc 1 293 0
+ 224 00f6 8338      	 cpi r24,lo8(-125)
+ 225 00f8 00F4      	 brsh .L28
+ 226               	.L58:
+ 294:main.c        **** 				} else {
+ 227               	 .loc 1 294 0
+ 228 00fa 8F5F      	 subi r24,lo8(-(1))
+ 229 00fc 8093 0000 	 sts bcnt.2192,r24
+ 230 0100 00C0      	 rjmp .L25
+ 231               	.L28:
+ 232               	.LBB27:
+ 233               	.LBB28:
+ 163:main.c        **** 	uint8_t size = SPM_PAGESIZE;
+ 234               	 .loc 1 163 0
+ 235 0102 8091 0000 	 lds r24,addr
+ 236 0106 9091 0000 	 lds r25,addr+1
+ 237               	.LVL7:
+ 168:main.c        **** 		return;
+ 238               	 .loc 1 168 0
+ 239 010a 8115      	 cp r24,__zero_reg__
+ 240 010c 2CE7      	 ldi r18,124
+ 241 010e 9207      	 cpc r25,r18
+ 242 0110 00F0      	 brlo .+2
+ 243 0112 00C0      	 rjmp .L18
+ 171:main.c        **** 	boot_spm_busy_wait();
+ 244               	 .loc 1 171 0
+ 245 0114 23E0      	 ldi r18,lo8(3)
+ 246 0116 FC01      	 movw r30,r24
+ 247               	 
+ 248               	 
+ 249 0118 2093 5700 	 sts 87,r18
+ 250 011c E895      	 spm
+ 251               	 
+ 252               	 
+ 253               	 
+ 254               	.L29:
+ 172:main.c        **** 
+ 255               	 .loc 1 172 0
+ 256 011e 07B6      	 in __tmp_reg__,0x37
+ 257 0120 00FC      	 sbrc __tmp_reg__,0
+ 258 0122 00C0      	 rjmp .L29
+ 259 0124 A0E0      	 ldi r26,lo8(buf)
+ 260 0126 B0E0      	 ldi r27,hi8(buf)
+ 261               	.LBB29:
+ 177:main.c        **** 
+ 262               	 .loc 1 177 0
+ 263 0128 41E0      	 ldi r20,lo8(1)
+ 264 012a BC01      	 movw r22,r24
+ 265 012c 6050      	 subi r22,lo8(buf)
+ 266 012e 7040      	 sbci r23,hi8(buf)
+ 267               	.LVL8:
+ 268               	.L30:
+ 175:main.c        **** 		data |= *p++ << 8;
+ 269               	 .loc 1 175 0
+ 270 0130 2C91      	 ld r18,X
+ 271               	.LVL9:
+ 177:main.c        **** 
+ 272               	 .loc 1 177 0
+ 273 0132 FB01      	 movw r30,r22
+ 274 0134 EA0F      	 add r30,r26
+ 275 0136 FB1F      	 adc r31,r27
+ 276 0138 1196      	 adiw r26,1
+ 277 013a 5C91      	 ld r21,X
+ 278 013c 1197      	 sbiw r26,1
+ 279 013e 30E0      	 ldi r19,0
+ 280 0140 352B      	 or r19,r21
+ 281               	 
+ 282               	 
+ 283 0142 0901      	 movw r0,r18
+ 284 0144 4093 5700 	 sts 87,r20
+ 285 0148 E895      	 spm
+ 286 014a 1124      	 clr r1
+ 287               	 
+ 288               	 
+ 289               	.LVL10:
+ 290               	 
+ 291 014c 1296      	 adiw r26,2
+ 292               	.LVL11:
+ 293               	.LBE29:
+ 181:main.c        **** 
+ 294               	 .loc 1 181 0
+ 295 014e F0E0      	 ldi r31,hi8(buf+128)
+ 296 0150 A030      	 cpi r26,lo8(buf+128)
+ 297 0152 BF07      	 cpc r27,r31
+ 298 0154 01F4      	 brne .L30
+ 299 0156 9C01      	 movw r18,r24
+ 300               	.LVL12:
+ 301 0158 2058      	 subi r18,-128
+ 302 015a 3F4F      	 sbci r19,-1
+ 303 015c 3093 0000 	 sts addr+1,r19
+ 304 0160 2093 0000 	 sts addr,r18
+ 183:main.c        **** 	boot_spm_busy_wait();
+ 305               	 .loc 1 183 0
+ 306 0164 25E0      	 ldi r18,lo8(5)
+ 307 0166 FC01      	 movw r30,r24
+ 308               	 
+ 309               	 
+ 310 0168 2093 5700 	 sts 87,r18
+ 311 016c E895      	 spm
+ 312               	 
+ 313               	 
+ 314               	 
+ 315               	.L31:
+ 184:main.c        **** 	boot_rww_enable();
+ 316               	 .loc 1 184 0
+ 317 016e 07B6      	 in __tmp_reg__,0x37
+ 318 0170 00FC      	 sbrc __tmp_reg__,0
+ 319 0172 00C0      	 rjmp .L31
+ 185:main.c        **** }
+ 320               	 .loc 1 185 0
+ 321 0174 81E1      	 ldi r24,lo8(17)
+ 322               	.LVL13:
+ 323               	 
+ 324               	 
+ 325 0176 8093 5700 	 sts 87,r24
+ 326 017a E895      	 spm
+ 327               	 
+ 328               	 
+ 329               	.LVL14:
+ 330               	 
+ 331               	.L18:
+ 332               	.LBE28:
+ 333               	.LBE27:
+ 314:main.c        **** 			bcnt = 0;
+ 334               	 .loc 1 314 0
+ 335 017c 1092 0000 	 sts bcnt.2192,__zero_reg__
+ 336 0180 80E0      	 ldi r24,0
+ 337               	.LVL15:
+ 338               	.L19:
+ 315:main.c        **** 
+ 316:main.c        **** 		TWCR1 |= (1<<TWINT) | ack;
+ 339               	 .loc 1 316 0
+ 340 0182 9091 DC00 	 lds r25,220
+ 341               	.LVL16:
+ 342 0186 9068      	 ori r25,lo8(-128)
+ 343 0188 892B      	 or r24,r25
+ 344 018a 00C0      	 rjmp .L60
+ 345               	.LVL17:
+ 346               	.L3:
+ 317:main.c        **** 		break;
+ 318:main.c        **** 
+ 319:main.c        **** 	/* SLA+R received, ACK returned -> send data */
+ 320:main.c        **** 	case 0xA8:
+ 321:main.c        **** 		bcnt = 0;
+ 347               	 .loc 1 321 0
+ 348 018c 1092 0000 	 sts bcnt.2192,__zero_reg__
+ 349               	.LVL18:
+ 350               	.LBB31:
+ 351               	.LBB32:
+ 352               	.LBB33:
+ 353               	 .loc 2 750 0
+ 354 0190 7398      	 cbi 0xe,3
+ 355               	.LVL19:
+ 356               	.L9:
+ 357               	.LBE33:
+ 358               	.LBE32:
+ 359               	.LBE31:
+ 322:main.c        **** 		LED_RT_ON();
+ 323:main.c        **** 
+ 324:main.c        **** 	/* prev. SLA+R, data sent, ACK returned -> send data */
+ 325:main.c        **** 	case 0xB8:
+ 326:main.c        **** 		switch (cmd) {
+ 360               	 .loc 1 326 0
+ 361 0192 8091 0000 	 lds r24,cmd
+ 362 0196 8231      	 cpi r24,lo8(18)
+ 363 0198 01F0      	 breq .L33
+ 364 019a 8232      	 cpi r24,lo8(34)
+ 365 019c 01F0      	 breq .L34
+ 366 019e 8130      	 cpi r24,lo8(1)
+ 367 01a0 01F4      	 brne .L56
+ 327:main.c        **** 		case CMD_READ_VERSION:
+ 328:main.c        **** 			data = info[bcnt++];
+ 368               	 .loc 1 328 0
+ 369 01a2 8091 0000 	 lds r24,bcnt.2192
+ 370 01a6 E82F      	 mov r30,r24
+ 371 01a8 F0E0      	 ldi r31,0
+ 372 01aa E050      	 subi r30,lo8(-(info))
+ 373 01ac F040      	 sbci r31,hi8(-(info))
+ 374 01ae E081      	 ld r30,Z
+ 375               	.LVL20:
+ 329:main.c        **** 			bcnt %= sizeof(info);
+ 376               	 .loc 1 329 0
+ 377 01b0 8F5F      	 subi r24,lo8(-(1))
+ 378 01b2 8F70      	 andi r24,lo8(15)
+ 379 01b4 00C0      	 rjmp .L57
+ 380               	.LVL21:
+ 381               	.L33:
+ 330:main.c        **** 			break;
+ 331:main.c        **** 
+ 332:main.c        **** 		case CMD_READ_CHIPINFO:
+ 333:main.c        **** 			data = chipinfo[bcnt++];
+ 382               	 .loc 1 333 0
+ 383 01b6 8091 0000 	 lds r24,bcnt.2192
+ 384 01ba E82F      	 mov r30,r24
+ 385 01bc F0E0      	 ldi r31,0
+ 386 01be E050      	 subi r30,lo8(-(chipinfo))
+ 387 01c0 F040      	 sbci r31,hi8(-(chipinfo))
+ 388 01c2 E081      	 ld r30,Z
+ 389               	.LVL22:
+ 334:main.c        **** 			bcnt %= sizeof(chipinfo);
+ 390               	 .loc 1 334 0
+ 391 01c4 8F5F      	 subi r24,lo8(-(1))
+ 392 01c6 8770      	 andi r24,lo8(7)
+ 393               	.L57:
+ 394 01c8 8093 0000 	 sts bcnt.2192,r24
+ 335:main.c        **** 			break;
+ 395               	 .loc 1 335 0
+ 396 01cc 00C0      	 rjmp .L32
+ 397               	.LVL23:
+ 398               	.L34:
+ 399               	.LBB34:
+ 336:main.c        **** 
+ 337:main.c        **** 		case CMD_READ_FLASH:
+ 338:main.c        **** 			data = pgm_read_byte_near(addr++);
+ 400               	 .loc 1 338 0
+ 401 01ce E091 0000 	 lds r30,addr
+ 402 01d2 F091 0000 	 lds r31,addr+1
+ 403 01d6 CF01      	 movw r24,r30
+ 404 01d8 0196      	 adiw r24,1
+ 405 01da 9093 0000 	 sts addr+1,r25
+ 406 01de 8093 0000 	 sts addr,r24
+ 407               	.LVL24:
+ 408               	 
+ 409               	 
+ 410 01e2 E491      	 lpm r30,Z
+ 411               	 
+ 412               	 
+ 413               	.LVL25:
+ 414               	 
+ 415               	.LBE34:
+ 339:main.c        **** 			break;
+ 416               	 .loc 1 339 0
+ 417 01e4 00C0      	 rjmp .L32
+ 418               	.LVL26:
+ 419               	.L56:
+ 340:main.c        **** #if (EEPROM_SUPPORT)
+ 341:main.c        **** 		case CMD_READ_EEPROM:
+ 342:main.c        **** 			data = read_eeprom_byte();
+ 343:main.c        **** 			break;
+ 344:main.c        **** #endif
+ 345:main.c        **** 		default:
+ 346:main.c        **** 			data = 0xFF;
+ 420               	 .loc 1 346 0
+ 421 01e6 EFEF      	 ldi r30,lo8(-1)
+ 422               	.L32:
+ 423               	.LVL27:
+ 347:main.c        **** 			break;
+ 348:main.c        **** 		}
+ 349:main.c        **** 
+ 350:main.c        **** 		TWDR1 = data;
+ 424               	 .loc 1 350 0
+ 425 01e8 E093 DB00 	 sts 219,r30
+ 426 01ec 00C0      	 rjmp .L61
+ 427               	.LVL28:
+ 428               	.L6:
+ 429               	.LBB35:
+ 430               	.LBB36:
+ 431               	.LBB37:
+ 748:port.h        **** 	} else {
+ 432               	 .loc 2 748 0
+ 433 01ee 739A      	 sbi 0xe,3
+ 434               	.LVL29:
+ 435               	.L61:
+ 436               	.LBE37:
+ 437               	.LBE36:
+ 438               	.LBE35:
+ 351:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWEA);
+ 352:main.c        **** 		break;
+ 353:main.c        **** 
+ 354:main.c        **** 	/* STOP or repeated START */
+ 355:main.c        **** 	case 0xA0:
+ 356:main.c        **** 	/* data sent, NACK returned */
+ 357:main.c        **** 	case 0xC0:
+ 358:main.c        **** 		LED_RT_OFF();
+ 359:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWEA);
+ 439               	 .loc 1 359 0
+ 440 01f0 8091 DC00 	 lds r24,220
+ 441 01f4 806C      	 ori r24,lo8(-64)
+ 442 01f6 00C0      	 rjmp .L60
+ 443               	.L8:
+ 360:main.c        **** 		break;
+ 361:main.c        **** 
+ 362:main.c        **** 	/* illegal state -> reset hardware */
+ 363:main.c        **** 	case 0xF8:
+ 364:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWSTO) | (1<<TWEA);
+ 444               	 .loc 1 364 0
+ 445 01f8 8091 DC00 	 lds r24,220
+ 446 01fc 806D      	 ori r24,lo8(-48)
+ 447               	.LVL30:
+ 448               	.L60:
+ 449 01fe 8093 DC00 	 sts 220,r24
+ 365:main.c        **** 		break;
+ 366:main.c        **** 	}
+ 367:main.c        **** }
+ 450               	 .loc 1 367 0
+ 451 0202 00C0      	 rjmp .L1
+ 452               	.LVL31:
+ 453               	.L25:
+ 454               	.LBB38:
+ 455               	.LBB30:
+ 172:main.c        **** 
+ 456               	 .loc 1 172 0
+ 457 0204 80E4      	 ldi r24,lo8(64)
+ 458 0206 00C0      	 rjmp .L19
+ 459               	.LVL32:
+ 460               	.L1:
+ 461               	 
+ 462               	.LBE30:
+ 463               	.LBE38:
+ 464               	 .loc 1 367 0
+ 465 0208 FF91      	 pop r31
+ 466 020a EF91      	 pop r30
+ 467 020c BF91      	 pop r27
+ 468 020e AF91      	 pop r26
+ 469 0210 9F91      	 pop r25
+ 470 0212 8F91      	 pop r24
+ 471 0214 7F91      	 pop r23
+ 472 0216 6F91      	 pop r22
+ 473 0218 5F91      	 pop r21
+ 474 021a 4F91      	 pop r20
+ 475 021c 3F91      	 pop r19
+ 476 021e 2F91      	 pop r18
+ 477 0220 0F90      	 pop r0
+ 478 0222 0FBE      	 out __SREG__,r0
+ 479 0224 0F90      	 pop r0
+ 480 0226 1F90      	 pop r1
+ 481 0228 1895      	 reti
+ 482               	 .cfi_endproc
+ 483               	.LFE107:
+ 485               	 .section .text.__vector_16,"ax",@progbits
+ 486               	.global __vector_16
+ 488               	__vector_16:
+ 489               	.LFB108:
+ 368:main.c        **** 
+ 369:main.c        **** ISR(TIMER0_OVF_vect)
+ 370:main.c        **** {
+ 490               	 .loc 1 370 0
+ 491               	 .cfi_startproc
+ 492 0000 1F92      	 push r1
+ 493               	.LCFI14:
+ 494               	 .cfi_def_cfa_offset 3
+ 495               	 .cfi_offset 1,-2
+ 496 0002 0F92      	 push r0
+ 497               	.LCFI15:
+ 498               	 .cfi_def_cfa_offset 4
+ 499               	 .cfi_offset 0,-3
+ 500 0004 0FB6      	 in r0,__SREG__
+ 501 0006 0F92      	 push r0
+ 502 0008 1124      	 clr __zero_reg__
+ 503 000a 8F93      	 push r24
+ 504               	.LCFI16:
+ 505               	 .cfi_def_cfa_offset 5
+ 506               	 .cfi_offset 24,-4
+ 507               	 
+ 508               	 
+ 509               	 
+ 510               	.L__stack_usage =4
+ 371:main.c        **** 	/* restart timer */
+ 372:main.c        **** 	TCNT0 = TIMER_RELOAD;
+ 511               	 .loc 1 372 0
+ 512 000c 8CE3      	 ldi r24,lo8(60)
+ 513 000e 86BD      	 out 0x26,r24
+ 514               	.LVL33:
+ 515               	.LBB39:
+ 516               	.LBB40:
+ 517               	.LBB41:
+ 751:port.h        **** 	}
+ 752:port.h        **** }
+ 753:port.h        **** 
+ 754:port.h        **** /**
+ 755:port.h        ****  * \brief Toggle out level on pins
+ 756:port.h        ****  *
+ 757:port.h        ****  * Toggle the pin levels on pins defined by bit mask
+ 758:port.h        ****  *
+ 759:port.h        ****  * \param[in] port  Ports are grouped into groups of maximum 32 pins,
+ 760:port.h        ****  *                  PORT_PORTA = group 0, PORT_PORTB = group 1, etc
+ 761:port.h        ****  * \param[in] mask  Bit mask where 1 means toggle pin level to the corresponding
+ 762:port.h        ****  *                  pin
+ 763:port.h        ****  */
+ 764:port.h        **** static inline void PORTE_toggle_port_level(const uint8_t mask)
+ 765:port.h        **** {
+ 766:port.h        **** 	PINE = mask;
+ 767:port.h        **** }
+ 768:port.h        **** 
+ 769:port.h        **** /**
+ 770:port.h        ****  * \brief Toggle output level on pin
+ 771:port.h        ****  *
+ 772:port.h        ****  * Toggle the pin levels on pin
+ 773:port.h        ****  *
+ 774:port.h        ****  * \param[in] pin       The pin number for device
+ 775:port.h        ****  */
+ 776:port.h        **** static inline void PORTE_toggle_pin_level(const uint8_t pin)
+ 777:port.h        **** {
+ 778:port.h        **** 	PINE = 1 << pin;
+ 518               	 .loc 2 778 0
+ 519 0010 88E0      	 ldi r24,lo8(8)
+ 520 0012 8CB9      	 out 0xc,r24
+ 521               	.LVL34:
+ 522               	.LBE41:
+ 523               	.LBE40:
+ 524               	.LBE39:
+ 373:main.c        **** 
+ 374:main.c        **** 	/* blink LED while running */
+ 375:main.c        **** 	LED_GN_TOGGLE();
+ 376:main.c        **** 	
+ 377:main.c        **** 
+ 378:main.c        **** 	/* count down for app-boot */
+ 379:main.c        **** 	if (boot_timeout > 1)
+ 525               	 .loc 1 379 0
+ 526 0014 8091 0000 	 lds r24,boot_timeout
+ 527 0018 8230      	 cpi r24,lo8(2)
+ 528 001a 00F0      	 brlo .L64
+ 380:main.c        **** 		boot_timeout--;
+ 529               	 .loc 1 380 0
+ 530 001c 8150      	 subi r24,lo8(-(-1))
+ 531 001e 8093 0000 	 sts boot_timeout,r24
+ 532 0022 00C0      	 rjmp .L63
+ 533               	.L64:
+ 381:main.c        **** 
+ 382:main.c        **** 	/* trigger app-boot */
+ 383:main.c        **** 	else if (boot_timeout == 1)
+ 534               	 .loc 1 383 0
+ 535 0024 8130      	 cpi r24,lo8(1)
+ 536 0026 01F4      	 brne .L63
+ 384:main.c        **** 		cmd = CMD_BOOT_APPLICATION;
+ 537               	 .loc 1 384 0
+ 538 0028 81E2      	 ldi r24,lo8(33)
+ 539 002a 8093 0000 	 sts cmd,r24
+ 540               	.L63:
+ 541               	 
+ 385:main.c        **** }
+ 542               	 .loc 1 385 0
+ 543 002e 8F91      	 pop r24
+ 544 0030 0F90      	 pop r0
+ 545 0032 0FBE      	 out __SREG__,r0
+ 546 0034 0F90      	 pop r0
+ 547 0036 1F90      	 pop r1
+ 548 0038 1895      	 reti
+ 549               	 .cfi_endproc
+ 550               	.LFE108:
+ 552               	 .section .init3,"ax",@progbits
+ 553               	.global disable_wdt_timer
+ 555               	disable_wdt_timer:
+ 556               	.LFB109:
+ 386:main.c        **** 
+ 387:main.c        **** static void (*jump_to_app)(void) __attribute__ ((noreturn)) = 0x0000;
+ 388:main.c        **** 
+ 389:main.c        **** /*
+ 390:main.c        ****  * For newer devices (mega88) the watchdog timer remains active even after a
+ 391:main.c        ****  * system reset. So disable it as soon as possible.
+ 392:main.c        ****  * automagically called on startup
+ 393:main.c        ****  */
+ 394:main.c        **** #if defined (__AVR_ATmega328PB__)
+ 395:main.c        **** void disable_wdt_timer(void) __attribute__((naked, section(".init3")));
+ 396:main.c        **** void disable_wdt_timer(void)
+ 397:main.c        **** {
+ 557               	 .loc 1 397 0
+ 558               	 .cfi_startproc
+ 559               	 
+ 560               	 
+ 561               	 
+ 562               	.L__stack_usage =0
+ 398:main.c        **** 	MCUSR = 0;
+ 563               	 .loc 1 398 0
+ 564 0000 14BE      	 out 0x34,__zero_reg__
+ 399:main.c        **** 	WDTCSR = (1<<WDCE) | (1<<WDE);
+ 565               	 .loc 1 399 0
+ 566 0002 E0E6      	 ldi r30,lo8(96)
+ 567 0004 F0E0      	 ldi r31,0
+ 568 0006 88E1      	 ldi r24,lo8(24)
+ 569 0008 8083      	 st Z,r24
+ 400:main.c        **** 	WDTCSR = (0<<WDE);
+ 570               	 .loc 1 400 0
+ 571 000a 1082      	 st Z,__zero_reg__
+ 572               	 
+ 401:main.c        **** }
+ 573               	 .loc 1 401 0
+ 574               	 .cfi_endproc
+ 575               	.LFE109:
+ 577               	 .section .text.startup.main,"ax",@progbits
+ 578               	.global main
+ 580               	main:
+ 581               	.LFB110:
+ 402:main.c        **** #endif 
+ 403:main.c        **** 
+ 404:main.c        **** int main(void) __attribute__ ((noreturn));
+ 405:main.c        **** int main(void)
+ 406:main.c        **** {
+ 582               	 .loc 1 406 0
+ 583               	 .cfi_startproc
+ 584               	 
+ 585               	 
+ 586               	 
+ 587               	.L__stack_usage =0
+ 407:main.c        ****     port_init();
+ 588               	 .loc 1 407 0
+ 589 0000 0E94 0000 	 call port_init
+ 590               	.LVL35:
+ 591               	.LBB54:
+ 592               	.LBB55:
+ 593               	.LBB56:
+ 705:port.h        **** 		break;
+ 594               	 .loc 2 705 0
+ 595 0004 6B9A      	 sbi 0xd,3
+ 596               	.LVL36:
+ 597               	.LBE56:
+ 598               	.LBE55:
+ 599               	.LBE54:
+ 600               	.LBB57:
+ 601               	.LBB58:
+ 602               	.LBB59:
+ 750:port.h        **** 	}
+ 603               	 .loc 2 750 0
+ 604 0006 7398      	 cbi 0xe,3
+ 605               	.LVL37:
+ 606               	.LBE59:
+ 607               	.LBE58:
+ 608               	.LBE57:
+ 408:main.c        **** 
+ 409:main.c        **** 	LED_INIT();
+ 410:main.c        **** 	LED_GN_ON();
+ 411:main.c        **** 
+ 412:main.c        **** 	/* move interrupt-vectors to bootloader */
+ 413:main.c        **** 	/* timer0: running with F_CPU/1024, OVF interrupt */
+ 414:main.c        **** 	MCUCR = (1<<IVCE);
+ 609               	 .loc 1 414 0
+ 610 0008 81E0      	 ldi r24,lo8(1)
+ 611 000a 85BF      	 out 0x35,r24
+ 415:main.c        **** 	MCUCR = (1<<IVSEL);
+ 612               	 .loc 1 415 0
+ 613 000c 92E0      	 ldi r25,lo8(2)
+ 614 000e 95BF      	 out 0x35,r25
+ 416:main.c        **** 
+ 417:main.c        **** 	TCCR0B = (1<<CS02) | (1<<CS00);
+ 615               	 .loc 1 417 0
+ 616 0010 95E0      	 ldi r25,lo8(5)
+ 617 0012 95BD      	 out 0x25,r25
+ 418:main.c        **** 	TIMSK0 = (1<<TOIE0);
+ 618               	 .loc 1 418 0
+ 619 0014 8093 6E00 	 sts 110,r24
+ 419:main.c        **** 
+ 420:main.c        **** 	/* TWI init: set address, auto ACKs with interrupts */
+ 421:main.c        **** 	TWAR1 = (TWI_ADDRESS<<1);
+ 620               	 .loc 1 421 0
+ 621 0018 8EE0      	 ldi r24,lo8(14)
+ 622 001a 8093 DA00 	 sts 218,r24
+ 422:main.c        **** 	TWCR1 = (1<<TWEA) | (1<<TWEN) | (1<<TWIE);
+ 623               	 .loc 1 422 0
+ 624 001e 85E4      	 ldi r24,lo8(69)
+ 625 0020 8093 DC00 	 sts 220,r24
+ 423:main.c        **** 
+ 424:main.c        **** 	sei();
+ 626               	 .loc 1 424 0
+ 627               	 
+ 628               	 
+ 629 0024 7894      	 sei
+ 630               	 
+ 631               	 
+ 632               	.L68:
+ 425:main.c        **** 	while (cmd != CMD_BOOT_APPLICATION);
+ 633               	 .loc 1 425 0 discriminator 1
+ 634 0026 8091 0000 	 lds r24,cmd
+ 635 002a 8132      	 cpi r24,lo8(33)
+ 636 002c 01F4      	 brne .L68
+ 426:main.c        **** 
+ 427:main.c        **** 	cli();
+ 637               	 .loc 1 427 0
+ 638               	 
+ 639               	 
+ 640 002e F894      	 cli
+ 641               	 
+ 428:main.c        **** 
+ 429:main.c        **** 	/* Disable TWI but keep address! */
+ 430:main.c        **** 	TWCR1 = 0x00;
+ 642               	 .loc 1 430 0
+ 643               	 
+ 644 0030 1092 DC00 	 sts 220,__zero_reg__
+ 431:main.c        **** 
+ 432:main.c        **** 	/* disable timer0 */
+ 433:main.c        **** 	/* move interrupt vectors back to application */
+ 434:main.c        **** 	TIMSK0 = 0x00;
+ 645               	 .loc 1 434 0
+ 646 0034 1092 6E00 	 sts 110,__zero_reg__
+ 435:main.c        **** 	TCCR0B = 0x00;
+ 647               	 .loc 1 435 0
+ 648 0038 15BC      	 out 0x25,__zero_reg__
+ 436:main.c        **** 
+ 437:main.c        **** 	MCUCR = (1<<IVCE);
+ 649               	 .loc 1 437 0
+ 650 003a 81E0      	 ldi r24,lo8(1)
+ 651 003c 85BF      	 out 0x35,r24
+ 438:main.c        **** 	MCUCR = (0<<IVSEL);
+ 652               	 .loc 1 438 0
+ 653 003e 15BE      	 out 0x35,__zero_reg__
+ 654               	.LVL38:
+ 655               	.LBB60:
+ 656               	.LBB61:
+ 657               	.LBB62:
+ 748:port.h        **** 	} else {
+ 658               	 .loc 2 748 0
+ 659 0040 739A      	 sbi 0xe,3
+ 660               	.LBE62:
+ 661               	.LBE61:
+ 662               	.LBE60:
+ 439:main.c        **** 
+ 440:main.c        **** 	LED_OFF();
+ 441:main.c        **** 
+ 442:main.c        **** 	uint16_t wait = 0x0000;
+ 663               	 .loc 1 442 0
+ 664 0042 E0E0      	 ldi r30,0
+ 665 0044 F0E0      	 ldi r31,0
+ 666               	.L69:
+ 667               	.LVL39:
+ 443:main.c        **** 	do {
+ 444:main.c        **** 		__asm volatile ("nop");
+ 668               	 .loc 1 444 0 discriminator 1
+ 669               	 
+ 670               	 
+ 671 0046 0000      	 nop
+ 672               	 
+ 445:main.c        **** 	} while (--wait);
+ 673               	 .loc 1 445 0 discriminator 1
+ 674               	 
+ 675 0048 3197      	 sbiw r30,1
+ 676               	.LVL40:
+ 677 004a 01F4      	 brne .L69
+ 446:main.c        **** 
+ 447:main.c        **** 	jump_to_app();
+ 678               	 .loc 1 447 0
+ 679 004c 0995      	 icall
+ 680               	.LVL41:
+ 681               	 .cfi_endproc
+ 682               	.LFE110:
+ 684               	 .section .bss.bcnt.2192,"aw",@nobits
+ 687               	bcnt.2192:
+ 688 0000 00        	 .zero 1
+ 689               	 .section .bss.addr,"aw",@nobits
+ 692               	addr:
+ 693 0000 0000      	 .zero 2
+ 694               	 .section .bss.buf,"aw",@nobits
+ 697               	buf:
+ 698 0000 0000 0000 	 .zero 128
+ 698      0000 0000 
+ 698      0000 0000 
+ 698      0000 0000 
+ 698      0000 0000 
+ 699               	 .section .bss.cmd,"aw",@nobits
+ 702               	cmd:
+ 703 0000 00        	 .zero 1
+ 704               	 .section .data.boot_timeout,"aw",@progbits
+ 707               	boot_timeout:
+ 708 0000 28        	 .byte 40
+ 709               	 .section .rodata.chipinfo,"a",@progbits
+ 712               	chipinfo:
+ 713 0000 1E        	 .byte 30
+ 714 0001 95        	 .byte -107
+ 715 0002 16        	 .byte 22
+ 716 0003 80        	 .byte -128
+ 717 0004 7C        	 .byte 124
+ 718 0005 00        	 .byte 0
+ 719 0006 00        	 .byte 0
+ 720 0007 00        	 .byte 0
+ 721               	 .section .rodata.info,"a",@progbits
+ 724               	info:
+ 725 0000 4D44 424F 	 .string "MDBOOT328PBv2.1"
+ 725      4F54 3332 
+ 725      3850 4276 
+ 725      322E 3100 
+ 726               	 .text
+ 727               	.Letext0:
+ 728               	 .file 3 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\include\\stdint.h"
+ 729               	 .file 4 "atmel_start_pins.h"
+ 730               	 .file 5 "port_init.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 main.c
+    {standard input}:2      *ABS*:0000003e __SP_H__
+    {standard input}:3      *ABS*:0000003d __SP_L__
+    {standard input}:4      *ABS*:0000003f __SREG__
+    {standard input}:5      *ABS*:00000000 __tmp_reg__
+    {standard input}:6      *ABS*:00000001 __zero_reg__
+    {standard input}:13     .text.__vector_40:00000000 __vector_40
+    {standard input}:687    .bss.bcnt.2192:00000000 bcnt.2192
+    {standard input}:692    .bss.addr:00000000 addr
+    {standard input}:707    .data.boot_timeout:00000000 boot_timeout
+    {standard input}:702    .bss.cmd:00000000 cmd
+    {standard input}:697    .bss.buf:00000000 buf
+    {standard input}:724    .rodata.info:00000000 info
+    {standard input}:712    .rodata.chipinfo:00000000 chipinfo
+    {standard input}:488    .text.__vector_16:00000000 __vector_16
+    {standard input}:555    .init3:00000000 disable_wdt_timer
+    {standard input}:580    .text.startup.main:00000000 main
+
+UNDEFINED SYMBOLS
+port_init
+__do_copy_data
+__do_clear_bss

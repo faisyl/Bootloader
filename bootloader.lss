@@ -1,0 +1,770 @@
+
+bootloader.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .data         0000001a  00800100  00007fd2  00000466  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  1 .text         000003d2  00007c00  00007c00  00000094  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  2 .bss          00000084  0080011a  0080011a  00000480  2**0
+                  ALLOC
+  3 .comment      00000030  00000000  00000000  00000480  2**0
+                  CONTENTS, READONLY
+  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  000004b0  2**2
+                  CONTENTS, READONLY
+  5 .debug_aranges 00000068  00000000  00000000  000004f0  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_info   000017d9  00000000  00000000  00000558  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_abbrev 00000bd8  00000000  00000000  00001d31  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_line   00000663  00000000  00000000  00002909  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_frame  00000100  00000000  00000000  00002f6c  2**2
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_str    0000078c  00000000  00000000  0000306c  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_loc    000006dc  00000000  00000000  000037f8  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_ranges 00000060  00000000  00000000  00003ed4  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00007c00 <__vectors>:
+    7c00:	59 c0       	rjmp	.+178    	; 0x7cb4 <__ctors_end>
+    7c02:	00 00       	nop
+    7c04:	78 c0       	rjmp	.+240    	; 0x7cf6 <__bad_interrupt>
+    7c06:	00 00       	nop
+    7c08:	76 c0       	rjmp	.+236    	; 0x7cf6 <__bad_interrupt>
+    7c0a:	00 00       	nop
+    7c0c:	74 c0       	rjmp	.+232    	; 0x7cf6 <__bad_interrupt>
+    7c0e:	00 00       	nop
+    7c10:	72 c0       	rjmp	.+228    	; 0x7cf6 <__bad_interrupt>
+    7c12:	00 00       	nop
+    7c14:	70 c0       	rjmp	.+224    	; 0x7cf6 <__bad_interrupt>
+    7c16:	00 00       	nop
+    7c18:	6e c0       	rjmp	.+220    	; 0x7cf6 <__bad_interrupt>
+    7c1a:	00 00       	nop
+    7c1c:	6c c0       	rjmp	.+216    	; 0x7cf6 <__bad_interrupt>
+    7c1e:	00 00       	nop
+    7c20:	6a c0       	rjmp	.+212    	; 0x7cf6 <__bad_interrupt>
+    7c22:	00 00       	nop
+    7c24:	68 c0       	rjmp	.+208    	; 0x7cf6 <__bad_interrupt>
+    7c26:	00 00       	nop
+    7c28:	66 c0       	rjmp	.+204    	; 0x7cf6 <__bad_interrupt>
+    7c2a:	00 00       	nop
+    7c2c:	64 c0       	rjmp	.+200    	; 0x7cf6 <__bad_interrupt>
+    7c2e:	00 00       	nop
+    7c30:	62 c0       	rjmp	.+196    	; 0x7cf6 <__bad_interrupt>
+    7c32:	00 00       	nop
+    7c34:	60 c0       	rjmp	.+192    	; 0x7cf6 <__bad_interrupt>
+    7c36:	00 00       	nop
+    7c38:	5e c0       	rjmp	.+188    	; 0x7cf6 <__bad_interrupt>
+    7c3a:	00 00       	nop
+    7c3c:	5c c0       	rjmp	.+184    	; 0x7cf6 <__bad_interrupt>
+    7c3e:	00 00       	nop
+    7c40:	70 c1       	rjmp	.+736    	; 0x7f22 <__vector_16>
+    7c42:	00 00       	nop
+    7c44:	58 c0       	rjmp	.+176    	; 0x7cf6 <__bad_interrupt>
+    7c46:	00 00       	nop
+    7c48:	56 c0       	rjmp	.+172    	; 0x7cf6 <__bad_interrupt>
+    7c4a:	00 00       	nop
+    7c4c:	54 c0       	rjmp	.+168    	; 0x7cf6 <__bad_interrupt>
+    7c4e:	00 00       	nop
+    7c50:	52 c0       	rjmp	.+164    	; 0x7cf6 <__bad_interrupt>
+    7c52:	00 00       	nop
+    7c54:	50 c0       	rjmp	.+160    	; 0x7cf6 <__bad_interrupt>
+    7c56:	00 00       	nop
+    7c58:	4e c0       	rjmp	.+156    	; 0x7cf6 <__bad_interrupt>
+    7c5a:	00 00       	nop
+    7c5c:	4c c0       	rjmp	.+152    	; 0x7cf6 <__bad_interrupt>
+    7c5e:	00 00       	nop
+    7c60:	4a c0       	rjmp	.+148    	; 0x7cf6 <__bad_interrupt>
+    7c62:	00 00       	nop
+    7c64:	48 c0       	rjmp	.+144    	; 0x7cf6 <__bad_interrupt>
+    7c66:	00 00       	nop
+    7c68:	46 c0       	rjmp	.+140    	; 0x7cf6 <__bad_interrupt>
+    7c6a:	00 00       	nop
+    7c6c:	44 c0       	rjmp	.+136    	; 0x7cf6 <__bad_interrupt>
+    7c6e:	00 00       	nop
+    7c70:	42 c0       	rjmp	.+132    	; 0x7cf6 <__bad_interrupt>
+    7c72:	00 00       	nop
+    7c74:	40 c0       	rjmp	.+128    	; 0x7cf6 <__bad_interrupt>
+    7c76:	00 00       	nop
+    7c78:	3e c0       	rjmp	.+124    	; 0x7cf6 <__bad_interrupt>
+    7c7a:	00 00       	nop
+    7c7c:	3c c0       	rjmp	.+120    	; 0x7cf6 <__bad_interrupt>
+    7c7e:	00 00       	nop
+    7c80:	3a c0       	rjmp	.+116    	; 0x7cf6 <__bad_interrupt>
+    7c82:	00 00       	nop
+    7c84:	38 c0       	rjmp	.+112    	; 0x7cf6 <__bad_interrupt>
+    7c86:	00 00       	nop
+    7c88:	36 c0       	rjmp	.+108    	; 0x7cf6 <__bad_interrupt>
+    7c8a:	00 00       	nop
+    7c8c:	34 c0       	rjmp	.+104    	; 0x7cf6 <__bad_interrupt>
+    7c8e:	00 00       	nop
+    7c90:	32 c0       	rjmp	.+100    	; 0x7cf6 <__bad_interrupt>
+    7c92:	00 00       	nop
+    7c94:	30 c0       	rjmp	.+96     	; 0x7cf6 <__bad_interrupt>
+    7c96:	00 00       	nop
+    7c98:	2e c0       	rjmp	.+92     	; 0x7cf6 <__bad_interrupt>
+    7c9a:	00 00       	nop
+    7c9c:	2c c0       	rjmp	.+88     	; 0x7cf6 <__bad_interrupt>
+    7c9e:	00 00       	nop
+    7ca0:	2b c0       	rjmp	.+86     	; 0x7cf8 <__vector_40>
+    7ca2:	00 00       	nop
+    7ca4:	28 c0       	rjmp	.+80     	; 0x7cf6 <__bad_interrupt>
+    7ca6:	00 00       	nop
+    7ca8:	26 c0       	rjmp	.+76     	; 0x7cf6 <__bad_interrupt>
+    7caa:	00 00       	nop
+    7cac:	24 c0       	rjmp	.+72     	; 0x7cf6 <__bad_interrupt>
+    7cae:	00 00       	nop
+    7cb0:	22 c0       	rjmp	.+68     	; 0x7cf6 <__bad_interrupt>
+	...
+
+00007cb4 <__ctors_end>:
+    7cb4:	11 24       	eor	r1, r1
+    7cb6:	1f be       	out	0x3f, r1	; 63
+    7cb8:	cf ef       	ldi	r28, 0xFF	; 255
+    7cba:	d8 e0       	ldi	r29, 0x08	; 8
+    7cbc:	de bf       	out	0x3e, r29	; 62
+    7cbe:	cd bf       	out	0x3d, r28	; 61
+
+00007cc0 <disable_wdt_timer>:
+ */
+#if defined (__AVR_ATmega328PB__)
+void disable_wdt_timer(void) __attribute__((naked, section(".init3")));
+void disable_wdt_timer(void)
+{
+	MCUSR = 0;
+    7cc0:	14 be       	out	0x34, r1	; 52
+	WDTCSR = (1<<WDCE) | (1<<WDE);
+    7cc2:	e0 e6       	ldi	r30, 0x60	; 96
+    7cc4:	f0 e0       	ldi	r31, 0x00	; 0
+    7cc6:	88 e1       	ldi	r24, 0x18	; 24
+    7cc8:	80 83       	st	Z, r24
+	WDTCSR = (0<<WDE);
+    7cca:	10 82       	st	Z, r1
+
+00007ccc <__do_copy_data>:
+    7ccc:	11 e0       	ldi	r17, 0x01	; 1
+    7cce:	a0 e0       	ldi	r26, 0x00	; 0
+    7cd0:	b1 e0       	ldi	r27, 0x01	; 1
+    7cd2:	e2 ed       	ldi	r30, 0xD2	; 210
+    7cd4:	ff e7       	ldi	r31, 0x7F	; 127
+    7cd6:	02 c0       	rjmp	.+4      	; 0x7cdc <__do_copy_data+0x10>
+    7cd8:	05 90       	lpm	r0, Z+
+    7cda:	0d 92       	st	X+, r0
+    7cdc:	aa 31       	cpi	r26, 0x1A	; 26
+    7cde:	b1 07       	cpc	r27, r17
+    7ce0:	d9 f7       	brne	.-10     	; 0x7cd8 <__do_copy_data+0xc>
+
+00007ce2 <__do_clear_bss>:
+    7ce2:	21 e0       	ldi	r18, 0x01	; 1
+    7ce4:	aa e1       	ldi	r26, 0x1A	; 26
+    7ce6:	b1 e0       	ldi	r27, 0x01	; 1
+    7ce8:	01 c0       	rjmp	.+2      	; 0x7cec <.do_clear_bss_start>
+
+00007cea <.do_clear_bss_loop>:
+    7cea:	1d 92       	st	X+, r1
+
+00007cec <.do_clear_bss_start>:
+    7cec:	ae 39       	cpi	r26, 0x9E	; 158
+    7cee:	b2 07       	cpc	r27, r18
+    7cf0:	e1 f7       	brne	.-8      	; 0x7cea <.do_clear_bss_loop>
+    7cf2:	34 d1       	rcall	.+616    	; 0x7f5c <main>
+    7cf4:	6c c1       	rjmp	.+728    	; 0x7fce <_exit>
+
+00007cf6 <__bad_interrupt>:
+    7cf6:	84 cf       	rjmp	.-248    	; 0x7c00 <__vectors>
+
+00007cf8 <__vector_40>:
+	eeprom_busy_wait();
+}
+#endif /* EEPROM_SUPPORT */
+
+ISR(TWI1_vect)
+{
+    7cf8:	1f 92       	push	r1
+    7cfa:	0f 92       	push	r0
+    7cfc:	0f b6       	in	r0, 0x3f	; 63
+    7cfe:	0f 92       	push	r0
+    7d00:	11 24       	eor	r1, r1
+    7d02:	2f 93       	push	r18
+    7d04:	3f 93       	push	r19
+    7d06:	4f 93       	push	r20
+    7d08:	5f 93       	push	r21
+    7d0a:	6f 93       	push	r22
+    7d0c:	7f 93       	push	r23
+    7d0e:	8f 93       	push	r24
+    7d10:	9f 93       	push	r25
+    7d12:	af 93       	push	r26
+    7d14:	bf 93       	push	r27
+    7d16:	ef 93       	push	r30
+    7d18:	ff 93       	push	r31
+	static uint8_t bcnt;
+	uint8_t data;
+	uint8_t ack = (1<<TWEA);
+
+	switch (TWSR1 & 0xF8) {
+    7d1a:	80 91 d9 00 	lds	r24, 0x00D9	; 0x8000d9 <__TEXT_REGION_LENGTH__+0x7e00d9>
+    7d1e:	88 7f       	andi	r24, 0xF8	; 248
+    7d20:	88 3a       	cpi	r24, 0xA8	; 168
+    7d22:	09 f4       	brne	.+2      	; 0x7d26 <__vector_40+0x2e>
+    7d24:	af c0       	rjmp	.+350    	; 0x7e84 <__vector_40+0x18c>
+    7d26:	60 f4       	brcc	.+24     	; 0x7d40 <__vector_40+0x48>
+    7d28:	80 38       	cpi	r24, 0x80	; 128
+    7d2a:	a1 f0       	breq	.+40     	; 0x7d54 <__vector_40+0x5c>
+    7d2c:	80 3a       	cpi	r24, 0xA0	; 160
+    7d2e:	09 f4       	brne	.+2      	; 0x7d32 <__vector_40+0x3a>
+    7d30:	da c0       	rjmp	.+436    	; 0x7ee6 <__vector_40+0x1ee>
+    7d32:	80 36       	cpi	r24, 0x60	; 96
+    7d34:	09 f0       	breq	.+2      	; 0x7d38 <__vector_40+0x40>
+    7d36:	e4 c0       	rjmp	.+456    	; 0x7f00 <__vector_40+0x208>
+	/* SLA+W received, ACK returned -> receive data and ACK */
+	case 0x60:
+		bcnt = 0;
+    7d38:	10 92 1a 01 	sts	0x011A, r1	; 0x80011a <__data_end>
+static inline void PORTE_set_pin_level(const uint8_t pin, const bool level)
+{
+	if (level) {
+		PORTE |= 1 << pin;
+	} else {
+		PORTE &= ~(1 << pin);
+    7d3c:	73 98       	cbi	0x0e, 3	; 14
+    7d3e:	d4 c0       	rjmp	.+424    	; 0x7ee8 <__vector_40+0x1f0>
+{
+	static uint8_t bcnt;
+	uint8_t data;
+	uint8_t ack = (1<<TWEA);
+
+	switch (TWSR1 & 0xF8) {
+    7d40:	80 3c       	cpi	r24, 0xC0	; 192
+    7d42:	09 f4       	brne	.+2      	; 0x7d46 <__vector_40+0x4e>
+    7d44:	d0 c0       	rjmp	.+416    	; 0x7ee6 <__vector_40+0x1ee>
+    7d46:	88 3f       	cpi	r24, 0xF8	; 248
+    7d48:	09 f4       	brne	.+2      	; 0x7d4c <__vector_40+0x54>
+    7d4a:	d2 c0       	rjmp	.+420    	; 0x7ef0 <__vector_40+0x1f8>
+    7d4c:	88 3b       	cpi	r24, 0xB8	; 184
+    7d4e:	09 f0       	breq	.+2      	; 0x7d52 <__vector_40+0x5a>
+    7d50:	d7 c0       	rjmp	.+430    	; 0x7f00 <__vector_40+0x208>
+    7d52:	9b c0       	rjmp	.+310    	; 0x7e8a <__vector_40+0x192>
+		TWCR1 |= (1<<TWINT) | (1<<TWEA);
+		break;
+
+	/* prev. SLA+W, data received, ACK returned -> receive data and ACK */
+	case 0x80:
+		data = TWDR1;
+    7d54:	90 91 db 00 	lds	r25, 0x00DB	; 0x8000db <__TEXT_REGION_LENGTH__+0x7e00db>
+		switch (bcnt) {
+    7d58:	80 91 1a 01 	lds	r24, 0x011A	; 0x80011a <__data_end>
+    7d5c:	81 30       	cpi	r24, 0x01	; 1
+    7d5e:	11 f1       	breq	.+68     	; 0x7da4 <__vector_40+0xac>
+    7d60:	60 f0       	brcs	.+24     	; 0x7d7a <__vector_40+0x82>
+    7d62:	84 30       	cpi	r24, 0x04	; 4
+    7d64:	d0 f5       	brcc	.+116    	; 0x7dda <__vector_40+0xe2>
+			break;
+
+		case 2:
+		case 3:
+			addr <<= 8;
+			addr |= data;
+    7d66:	20 e0       	ldi	r18, 0x00	; 0
+    7d68:	30 e0       	ldi	r19, 0x00	; 0
+    7d6a:	30 91 1b 01 	lds	r19, 0x011B	; 0x80011b <addr>
+    7d6e:	29 2b       	or	r18, r25
+    7d70:	30 93 1c 01 	sts	0x011C, r19	; 0x80011c <addr+0x1>
+    7d74:	20 93 1b 01 	sts	0x011B, r18	; 0x80011b <addr>
+    7d78:	3c c0       	rjmp	.+120    	; 0x7df2 <__vector_40+0xfa>
+	/* prev. SLA+W, data received, ACK returned -> receive data and ACK */
+	case 0x80:
+		data = TWDR1;
+		switch (bcnt) {
+		case 0:
+			switch (data) {
+    7d7a:	99 23       	and	r25, r25
+    7d7c:	29 f0       	breq	.+10     	; 0x7d88 <__vector_40+0x90>
+    7d7e:	93 30       	cpi	r25, 0x03	; 3
+    7d80:	38 f4       	brcc	.+14     	; 0x7d90 <__vector_40+0x98>
+			case CMD_SWITCH_APPLICATION:
+			case CMD_WRITE_MEMORY:
+				bcnt++;
+    7d82:	81 e0       	ldi	r24, 0x01	; 1
+    7d84:	80 93 1a 01 	sts	0x011A, r24	; 0x80011a <__data_end>
+				/* no break */
+
+			case CMD_WAIT:
+				/* abort countdown */
+				boot_timeout = 0;
+    7d88:	10 92 00 01 	sts	0x0100, r1	; 0x800100 <__data_start>
+
+ISR(TWI1_vect)
+{
+	static uint8_t bcnt;
+	uint8_t data;
+	uint8_t ack = (1<<TWEA);
+    7d8c:	80 e4       	ldi	r24, 0x40	; 64
+				/* no break */
+
+			case CMD_WAIT:
+				/* abort countdown */
+				boot_timeout = 0;
+				break;
+    7d8e:	04 c0       	rjmp	.+8      	; 0x7d98 <__vector_40+0xa0>
+
+			default:
+				/* boot app now */
+				cmd = CMD_BOOT_APPLICATION;
+    7d90:	81 e2       	ldi	r24, 0x21	; 33
+    7d92:	80 93 9d 01 	sts	0x019D, r24	; 0x80019d <cmd>
+				ack = (0<<TWEA);
+    7d96:	80 e0       	ldi	r24, 0x00	; 0
+				break;
+			}
+			cmd = data;
+    7d98:	90 93 9d 01 	sts	0x019D, r25	; 0x80019d <cmd>
+				break;
+			}
+			break;
+		}
+
+		if (ack == 0x00)
+    7d9c:	88 23       	and	r24, r24
+    7d9e:	09 f4       	brne	.+2      	; 0x7da2 <__vector_40+0xaa>
+    7da0:	69 c0       	rjmp	.+210    	; 0x7e74 <__vector_40+0x17c>
+    7da2:	6b c0       	rjmp	.+214    	; 0x7e7a <__vector_40+0x182>
+			}
+			cmd = data;
+			break;
+
+		case 1:
+			switch (cmd) {
+    7da4:	80 91 9d 01 	lds	r24, 0x019D	; 0x80019d <cmd>
+    7da8:	81 30       	cpi	r24, 0x01	; 1
+    7daa:	19 f0       	breq	.+6      	; 0x7db2 <__vector_40+0xba>
+    7dac:	82 30       	cpi	r24, 0x02	; 2
+    7dae:	41 f0       	breq	.+16     	; 0x7dc0 <__vector_40+0xc8>
+    7db0:	61 c0       	rjmp	.+194    	; 0x7e74 <__vector_40+0x17c>
+			case CMD_SWITCH_APPLICATION:
+				if (data == BOOTTYPE_APPLICATION) {
+    7db2:	90 38       	cpi	r25, 0x80	; 128
+    7db4:	09 f0       	breq	.+2      	; 0x7db8 <__vector_40+0xc0>
+    7db6:	5e c0       	rjmp	.+188    	; 0x7e74 <__vector_40+0x17c>
+					cmd = CMD_BOOT_APPLICATION;
+    7db8:	81 e2       	ldi	r24, 0x21	; 33
+    7dba:	80 93 9d 01 	sts	0x019D, r24	; 0x80019d <cmd>
+    7dbe:	5a c0       	rjmp	.+180    	; 0x7e74 <__vector_40+0x17c>
+				}
+				ack = (0<<TWEA);
+				break;
+
+			case CMD_WRITE_MEMORY:
+				bcnt++;
+    7dc0:	80 93 1a 01 	sts	0x011A, r24	; 0x80011a <__data_end>
+				if (data == MEMTYPE_CHIPINFO) {
+    7dc4:	91 11       	cpse	r25, r1
+    7dc6:	02 c0       	rjmp	.+4      	; 0x7dcc <__vector_40+0xd4>
+					cmd = CMD_WRITE_CHIPINFO;
+    7dc8:	82 e1       	ldi	r24, 0x12	; 18
+    7dca:	04 c0       	rjmp	.+8      	; 0x7dd4 <__vector_40+0xdc>
+
+				} else if (data == MEMTYPE_FLASH) {
+    7dcc:	91 30       	cpi	r25, 0x01	; 1
+    7dce:	09 f0       	breq	.+2      	; 0x7dd2 <__vector_40+0xda>
+    7dd0:	51 c0       	rjmp	.+162    	; 0x7e74 <__vector_40+0x17c>
+					cmd = CMD_WRITE_FLASH;
+    7dd2:	82 e2       	ldi	r24, 0x22	; 34
+    7dd4:	80 93 9d 01 	sts	0x019D, r24	; 0x80019d <cmd>
+    7dd8:	91 c0       	rjmp	.+290    	; 0x7efc <__vector_40+0x204>
+			addr |= data;
+			bcnt++;
+			break;
+
+		default:
+			switch (cmd) {
+    7dda:	20 91 9d 01 	lds	r18, 0x019D	; 0x80019d <cmd>
+    7dde:	22 32       	cpi	r18, 0x22	; 34
+    7de0:	09 f0       	breq	.+2      	; 0x7de4 <__vector_40+0xec>
+    7de2:	48 c0       	rjmp	.+144    	; 0x7e74 <__vector_40+0x17c>
+			case CMD_WRITE_FLASH:
+				buf[bcnt -4] = data;
+    7de4:	e8 2f       	mov	r30, r24
+    7de6:	f0 e0       	ldi	r31, 0x00	; 0
+    7de8:	e7 5e       	subi	r30, 0xE7	; 231
+    7dea:	fe 4f       	sbci	r31, 0xFE	; 254
+    7dec:	90 83       	st	Z, r25
+				if (bcnt < sizeof(buf) +3) {
+    7dee:	83 38       	cpi	r24, 0x83	; 131
+    7df0:	20 f4       	brcc	.+8      	; 0x7dfa <__vector_40+0x102>
+					bcnt++;
+    7df2:	8f 5f       	subi	r24, 0xFF	; 255
+    7df4:	80 93 1a 01 	sts	0x011A, r24	; 0x80011a <__data_end>
+    7df8:	81 c0       	rjmp	.+258    	; 0x7efc <__vector_40+0x204>
+static uint8_t buf[SPM_PAGESIZE];
+static uint16_t addr;
+
+static void write_flash_page(void)
+{
+	uint16_t pagestart = addr;
+    7dfa:	80 91 1b 01 	lds	r24, 0x011B	; 0x80011b <addr>
+    7dfe:	90 91 1c 01 	lds	r25, 0x011C	; 0x80011c <addr+0x1>
+	uint8_t size = SPM_PAGESIZE;
+	uint8_t *p = buf;
+
+	//Don't overwrite bootloader
+	if (pagestart >= BOOTLOADER_START)
+    7e02:	81 15       	cp	r24, r1
+    7e04:	2c e7       	ldi	r18, 0x7C	; 124
+    7e06:	92 07       	cpc	r25, r18
+    7e08:	08 f0       	brcs	.+2      	; 0x7e0c <__vector_40+0x114>
+    7e0a:	34 c0       	rjmp	.+104    	; 0x7e74 <__vector_40+0x17c>
+		return;
+
+	boot_page_erase(pagestart);
+    7e0c:	23 e0       	ldi	r18, 0x03	; 3
+    7e0e:	fc 01       	movw	r30, r24
+    7e10:	20 93 57 00 	sts	0x0057, r18	; 0x800057 <__TEXT_REGION_LENGTH__+0x7e0057>
+    7e14:	e8 95       	spm
+	boot_spm_busy_wait();
+    7e16:	07 b6       	in	r0, 0x37	; 55
+    7e18:	00 fc       	sbrc	r0, 0
+    7e1a:	fd cf       	rjmp	.-6      	; 0x7e16 <__vector_40+0x11e>
+    7e1c:	ad e1       	ldi	r26, 0x1D	; 29
+    7e1e:	b1 e0       	ldi	r27, 0x01	; 1
+
+	do {
+		uint16_t data = *p++;
+		data |= *p++ << 8;
+		boot_page_fill(addr, data);
+    7e20:	41 e0       	ldi	r20, 0x01	; 1
+    7e22:	bc 01       	movw	r22, r24
+    7e24:	6d 51       	subi	r22, 0x1D	; 29
+    7e26:	71 40       	sbci	r23, 0x01	; 1
+
+	boot_page_erase(pagestart);
+	boot_spm_busy_wait();
+
+	do {
+		uint16_t data = *p++;
+    7e28:	2c 91       	ld	r18, X
+		data |= *p++ << 8;
+		boot_page_fill(addr, data);
+    7e2a:	fb 01       	movw	r30, r22
+    7e2c:	ea 0f       	add	r30, r26
+    7e2e:	fb 1f       	adc	r31, r27
+    7e30:	11 96       	adiw	r26, 0x01	; 1
+    7e32:	5c 91       	ld	r21, X
+    7e34:	11 97       	sbiw	r26, 0x01	; 1
+    7e36:	30 e0       	ldi	r19, 0x00	; 0
+    7e38:	35 2b       	or	r19, r21
+    7e3a:	09 01       	movw	r0, r18
+    7e3c:	40 93 57 00 	sts	0x0057, r20	; 0x800057 <__TEXT_REGION_LENGTH__+0x7e0057>
+    7e40:	e8 95       	spm
+    7e42:	11 24       	eor	r1, r1
+    7e44:	12 96       	adiw	r26, 0x02	; 2
+
+		addr += 2;
+		size -= 2;
+	} while (size);
+    7e46:	f1 e0       	ldi	r31, 0x01	; 1
+    7e48:	ad 39       	cpi	r26, 0x9D	; 157
+    7e4a:	bf 07       	cpc	r27, r31
+    7e4c:	69 f7       	brne	.-38     	; 0x7e28 <__vector_40+0x130>
+    7e4e:	9c 01       	movw	r18, r24
+    7e50:	20 58       	subi	r18, 0x80	; 128
+    7e52:	3f 4f       	sbci	r19, 0xFF	; 255
+    7e54:	30 93 1c 01 	sts	0x011C, r19	; 0x80011c <addr+0x1>
+    7e58:	20 93 1b 01 	sts	0x011B, r18	; 0x80011b <addr>
+
+	boot_page_write(pagestart);
+    7e5c:	25 e0       	ldi	r18, 0x05	; 5
+    7e5e:	fc 01       	movw	r30, r24
+    7e60:	20 93 57 00 	sts	0x0057, r18	; 0x800057 <__TEXT_REGION_LENGTH__+0x7e0057>
+    7e64:	e8 95       	spm
+	boot_spm_busy_wait();
+    7e66:	07 b6       	in	r0, 0x37	; 55
+    7e68:	00 fc       	sbrc	r0, 0
+    7e6a:	fd cf       	rjmp	.-6      	; 0x7e66 <__vector_40+0x16e>
+	boot_rww_enable();
+    7e6c:	81 e1       	ldi	r24, 0x11	; 17
+    7e6e:	80 93 57 00 	sts	0x0057, r24	; 0x800057 <__TEXT_REGION_LENGTH__+0x7e0057>
+    7e72:	e8 95       	spm
+			}
+			break;
+		}
+
+		if (ack == 0x00)
+			bcnt = 0;
+    7e74:	10 92 1a 01 	sts	0x011A, r1	; 0x80011a <__data_end>
+    7e78:	80 e0       	ldi	r24, 0x00	; 0
+
+		TWCR1 |= (1<<TWINT) | ack;
+    7e7a:	90 91 dc 00 	lds	r25, 0x00DC	; 0x8000dc <__TEXT_REGION_LENGTH__+0x7e00dc>
+    7e7e:	90 68       	ori	r25, 0x80	; 128
+    7e80:	89 2b       	or	r24, r25
+    7e82:	39 c0       	rjmp	.+114    	; 0x7ef6 <__vector_40+0x1fe>
+		break;
+
+	/* SLA+R received, ACK returned -> send data */
+	case 0xA8:
+		bcnt = 0;
+    7e84:	10 92 1a 01 	sts	0x011A, r1	; 0x80011a <__data_end>
+    7e88:	73 98       	cbi	0x0e, 3	; 14
+		LED_RT_ON();
+
+	/* prev. SLA+R, data sent, ACK returned -> send data */
+	case 0xB8:
+		switch (cmd) {
+    7e8a:	80 91 9d 01 	lds	r24, 0x019D	; 0x80019d <cmd>
+    7e8e:	82 31       	cpi	r24, 0x12	; 18
+    7e90:	71 f0       	breq	.+28     	; 0x7eae <__vector_40+0x1b6>
+    7e92:	82 32       	cpi	r24, 0x22	; 34
+    7e94:	c1 f0       	breq	.+48     	; 0x7ec6 <__vector_40+0x1ce>
+    7e96:	81 30       	cpi	r24, 0x01	; 1
+    7e98:	11 f5       	brne	.+68     	; 0x7ede <__vector_40+0x1e6>
+		case CMD_READ_VERSION:
+			data = info[bcnt++];
+    7e9a:	80 91 1a 01 	lds	r24, 0x011A	; 0x80011a <__data_end>
+    7e9e:	e8 2f       	mov	r30, r24
+    7ea0:	f0 e0       	ldi	r31, 0x00	; 0
+    7ea2:	e7 5f       	subi	r30, 0xF7	; 247
+    7ea4:	fe 4f       	sbci	r31, 0xFE	; 254
+    7ea6:	e0 81       	ld	r30, Z
+			bcnt %= sizeof(info);
+    7ea8:	8f 5f       	subi	r24, 0xFF	; 255
+    7eaa:	8f 70       	andi	r24, 0x0F	; 15
+    7eac:	09 c0       	rjmp	.+18     	; 0x7ec0 <__vector_40+0x1c8>
+			break;
+
+		case CMD_READ_CHIPINFO:
+			data = chipinfo[bcnt++];
+    7eae:	80 91 1a 01 	lds	r24, 0x011A	; 0x80011a <__data_end>
+    7eb2:	e8 2f       	mov	r30, r24
+    7eb4:	f0 e0       	ldi	r31, 0x00	; 0
+    7eb6:	ef 5f       	subi	r30, 0xFF	; 255
+    7eb8:	fe 4f       	sbci	r31, 0xFE	; 254
+    7eba:	e0 81       	ld	r30, Z
+			bcnt %= sizeof(chipinfo);
+    7ebc:	8f 5f       	subi	r24, 0xFF	; 255
+    7ebe:	87 70       	andi	r24, 0x07	; 7
+    7ec0:	80 93 1a 01 	sts	0x011A, r24	; 0x80011a <__data_end>
+			break;
+    7ec4:	0d c0       	rjmp	.+26     	; 0x7ee0 <__vector_40+0x1e8>
+
+		case CMD_READ_FLASH:
+			data = pgm_read_byte_near(addr++);
+    7ec6:	e0 91 1b 01 	lds	r30, 0x011B	; 0x80011b <addr>
+    7eca:	f0 91 1c 01 	lds	r31, 0x011C	; 0x80011c <addr+0x1>
+    7ece:	cf 01       	movw	r24, r30
+    7ed0:	01 96       	adiw	r24, 0x01	; 1
+    7ed2:	90 93 1c 01 	sts	0x011C, r25	; 0x80011c <addr+0x1>
+    7ed6:	80 93 1b 01 	sts	0x011B, r24	; 0x80011b <addr>
+    7eda:	e4 91       	lpm	r30, Z
+			break;
+    7edc:	01 c0       	rjmp	.+2      	; 0x7ee0 <__vector_40+0x1e8>
+		case CMD_READ_EEPROM:
+			data = read_eeprom_byte();
+			break;
+#endif
+		default:
+			data = 0xFF;
+    7ede:	ef ef       	ldi	r30, 0xFF	; 255
+			break;
+		}
+
+		TWDR1 = data;
+    7ee0:	e0 93 db 00 	sts	0x00DB, r30	; 0x8000db <__TEXT_REGION_LENGTH__+0x7e00db>
+    7ee4:	01 c0       	rjmp	.+2      	; 0x7ee8 <__vector_40+0x1f0>
+ *                  false = Pin level set to "low" state
+ */
+static inline void PORTE_set_pin_level(const uint8_t pin, const bool level)
+{
+	if (level) {
+		PORTE |= 1 << pin;
+    7ee6:	73 9a       	sbi	0x0e, 3	; 14
+	/* STOP or repeated START */
+	case 0xA0:
+	/* data sent, NACK returned */
+	case 0xC0:
+		LED_RT_OFF();
+		TWCR1 |= (1<<TWINT) | (1<<TWEA);
+    7ee8:	80 91 dc 00 	lds	r24, 0x00DC	; 0x8000dc <__TEXT_REGION_LENGTH__+0x7e00dc>
+    7eec:	80 6c       	ori	r24, 0xC0	; 192
+    7eee:	03 c0       	rjmp	.+6      	; 0x7ef6 <__vector_40+0x1fe>
+		break;
+
+	/* illegal state -> reset hardware */
+	case 0xF8:
+		TWCR1 |= (1<<TWINT) | (1<<TWSTO) | (1<<TWEA);
+    7ef0:	80 91 dc 00 	lds	r24, 0x00DC	; 0x8000dc <__TEXT_REGION_LENGTH__+0x7e00dc>
+    7ef4:	80 6d       	ori	r24, 0xD0	; 208
+    7ef6:	80 93 dc 00 	sts	0x00DC, r24	; 0x8000dc <__TEXT_REGION_LENGTH__+0x7e00dc>
+		break;
+	}
+}
+    7efa:	02 c0       	rjmp	.+4      	; 0x7f00 <__vector_40+0x208>
+	//Don't overwrite bootloader
+	if (pagestart >= BOOTLOADER_START)
+		return;
+
+	boot_page_erase(pagestart);
+	boot_spm_busy_wait();
+    7efc:	80 e4       	ldi	r24, 0x40	; 64
+    7efe:	bd cf       	rjmp	.-134    	; 0x7e7a <__vector_40+0x182>
+	/* illegal state -> reset hardware */
+	case 0xF8:
+		TWCR1 |= (1<<TWINT) | (1<<TWSTO) | (1<<TWEA);
+		break;
+	}
+}
+    7f00:	ff 91       	pop	r31
+    7f02:	ef 91       	pop	r30
+    7f04:	bf 91       	pop	r27
+    7f06:	af 91       	pop	r26
+    7f08:	9f 91       	pop	r25
+    7f0a:	8f 91       	pop	r24
+    7f0c:	7f 91       	pop	r23
+    7f0e:	6f 91       	pop	r22
+    7f10:	5f 91       	pop	r21
+    7f12:	4f 91       	pop	r20
+    7f14:	3f 91       	pop	r19
+    7f16:	2f 91       	pop	r18
+    7f18:	0f 90       	pop	r0
+    7f1a:	0f be       	out	0x3f, r0	; 63
+    7f1c:	0f 90       	pop	r0
+    7f1e:	1f 90       	pop	r1
+    7f20:	18 95       	reti
+
+00007f22 <__vector_16>:
+
+ISR(TIMER0_OVF_vect)
+{
+    7f22:	1f 92       	push	r1
+    7f24:	0f 92       	push	r0
+    7f26:	0f b6       	in	r0, 0x3f	; 63
+    7f28:	0f 92       	push	r0
+    7f2a:	11 24       	eor	r1, r1
+    7f2c:	8f 93       	push	r24
+	/* restart timer */
+	TCNT0 = TIMER_RELOAD;
+    7f2e:	8c e3       	ldi	r24, 0x3C	; 60
+    7f30:	86 bd       	out	0x26, r24	; 38
+ *
+ * \param[in] pin       The pin number for device
+ */
+static inline void PORTE_toggle_pin_level(const uint8_t pin)
+{
+	PINE = 1 << pin;
+    7f32:	88 e0       	ldi	r24, 0x08	; 8
+    7f34:	8c b9       	out	0x0c, r24	; 12
+	/* blink LED while running */
+	LED_GN_TOGGLE();
+	
+
+	/* count down for app-boot */
+	if (boot_timeout > 1)
+    7f36:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_start>
+    7f3a:	82 30       	cpi	r24, 0x02	; 2
+    7f3c:	20 f0       	brcs	.+8      	; 0x7f46 <__vector_16+0x24>
+		boot_timeout--;
+    7f3e:	81 50       	subi	r24, 0x01	; 1
+    7f40:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_start>
+    7f44:	05 c0       	rjmp	.+10     	; 0x7f50 <__vector_16+0x2e>
+
+	/* trigger app-boot */
+	else if (boot_timeout == 1)
+    7f46:	81 30       	cpi	r24, 0x01	; 1
+    7f48:	19 f4       	brne	.+6      	; 0x7f50 <__vector_16+0x2e>
+		cmd = CMD_BOOT_APPLICATION;
+    7f4a:	81 e2       	ldi	r24, 0x21	; 33
+    7f4c:	80 93 9d 01 	sts	0x019D, r24	; 0x80019d <cmd>
+}
+    7f50:	8f 91       	pop	r24
+    7f52:	0f 90       	pop	r0
+    7f54:	0f be       	out	0x3f, r0	; 63
+    7f56:	0f 90       	pop	r0
+    7f58:	1f 90       	pop	r1
+    7f5a:	18 95       	reti
+
+00007f5c <main>:
+void disable_wdt_timer(void)
+{
+	MCUSR = 0;
+	WDTCSR = (1<<WDCE) | (1<<WDE);
+	WDTCSR = (0<<WDE);
+}
+    7f5c:	2c d0       	rcall	.+88     	; 0x7fb6 <port_init>
+    7f5e:	6b 9a       	sbi	0x0d, 3	; 13
+    7f60:	73 98       	cbi	0x0e, 3	; 14
+    7f62:	81 e0       	ldi	r24, 0x01	; 1
+    7f64:	85 bf       	out	0x35, r24	; 53
+    7f66:	92 e0       	ldi	r25, 0x02	; 2
+    7f68:	95 bf       	out	0x35, r25	; 53
+    7f6a:	95 e0       	ldi	r25, 0x05	; 5
+    7f6c:	95 bd       	out	0x25, r25	; 37
+    7f6e:	80 93 6e 00 	sts	0x006E, r24	; 0x80006e <__TEXT_REGION_LENGTH__+0x7e006e>
+    7f72:	8e e0       	ldi	r24, 0x0E	; 14
+    7f74:	80 93 da 00 	sts	0x00DA, r24	; 0x8000da <__TEXT_REGION_LENGTH__+0x7e00da>
+    7f78:	85 e4       	ldi	r24, 0x45	; 69
+    7f7a:	80 93 dc 00 	sts	0x00DC, r24	; 0x8000dc <__TEXT_REGION_LENGTH__+0x7e00dc>
+    7f7e:	78 94       	sei
+    7f80:	80 91 9d 01 	lds	r24, 0x019D	; 0x80019d <cmd>
+    7f84:	81 32       	cpi	r24, 0x21	; 33
+    7f86:	e1 f7       	brne	.-8      	; 0x7f80 <main+0x24>
+    7f88:	f8 94       	cli
+    7f8a:	10 92 dc 00 	sts	0x00DC, r1	; 0x8000dc <__TEXT_REGION_LENGTH__+0x7e00dc>
+    7f8e:	10 92 6e 00 	sts	0x006E, r1	; 0x80006e <__TEXT_REGION_LENGTH__+0x7e006e>
+    7f92:	15 bc       	out	0x25, r1	; 37
+    7f94:	81 e0       	ldi	r24, 0x01	; 1
+    7f96:	85 bf       	out	0x35, r24	; 53
+    7f98:	15 be       	out	0x35, r1	; 53
+    7f9a:	73 9a       	sbi	0x0e, 3	; 14
+    7f9c:	e0 e0       	ldi	r30, 0x00	; 0
+    7f9e:	f0 e0       	ldi	r31, 0x00	; 0
+    7fa0:	00 00       	nop
+    7fa2:	31 97       	sbiw	r30, 0x01	; 1
+    7fa4:	e9 f7       	brne	.-6      	; 0x7fa0 <main+0x44>
+    7fa6:	09 95       	icall
+
+00007fa8 <I2C_0_initialization>:
+		DDRE &= ~(1 << pin);
+
+		PORTE |= 1 << pin;
+	} else if (pull_mode == PORT_PULL_OFF) {
+
+		PORTE &= ~(1 << pin);
+    7fa8:	3d 9a       	sbi	0x07, 5	; 7
+    7faa:	45 98       	cbi	0x08, 5	; 8
+    7fac:	45 98       	cbi	0x08, 5	; 8
+    7fae:	3c 9a       	sbi	0x07, 4	; 7
+    7fb0:	44 98       	cbi	0x08, 4	; 8
+    7fb2:	44 98       	cbi	0x08, 4	; 8
+    7fb4:	08 95       	ret
+
+00007fb6 <port_init>:
+	    PORT_PULL_OFF);
+
+}
+
+void port_init()
+{
+    7fb6:	f8 df       	rcall	.-16     	; 0x7fa8 <I2C_0_initialization>
+    7fb8:	26 98       	cbi	0x04, 6	; 4
+    7fba:	2e 98       	cbi	0x05, 6	; 5
+    7fbc:	39 98       	cbi	0x07, 1	; 7
+    7fbe:	41 98       	cbi	0x08, 1	; 8
+    7fc0:	53 98       	cbi	0x0a, 3	; 10
+    7fc2:	5b 98       	cbi	0x0b, 3	; 11
+    7fc4:	55 98       	cbi	0x0a, 5	; 10
+    7fc6:	5d 98       	cbi	0x0b, 5	; 11
+    7fc8:	6b 9a       	sbi	0x0d, 3	; 13
+    7fca:	73 9a       	sbi	0x0e, 3	; 14
+    7fcc:	08 95       	ret
+
+00007fce <_exit>:
+    7fce:	f8 94       	cli
+
+00007fd0 <__stop_program>:
+    7fd0:	ff cf       	rjmp	.-2      	; 0x7fd0 <__stop_program>

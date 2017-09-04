@@ -20,50 +20,26 @@
 #include <avr/interrupt.h>
 #include <avr/boot.h>
 #include <avr/pgmspace.h>
+#include "port_init.h"
 
 /*
- * atmega8:
- * Fuse H: 0xda (512 words bootloader)
- * Fuse L: 0x84 (8Mhz internal RC-Osz., 2.7V BOD)
- *
- * atmega88:
- * Fuse E: 0xfa (512 words bootloader)
- * Fuse H: 0xdd (2.7V BOD)
- * Fuse L: 0xc2 (8Mhz internal RC-Osz.)
- *
- * atmega168:
- * Fuse E: 0xfa (512 words bootloader)
- * Fuse H: 0xdd (2.7V BOD)
- * Fuse L: 0xc2 (8Mhz internal RC-Osz.)
- *
- * atmega328p:
+ * atmega328pb:
  * Fuse E: 0xfd (2.7V BOD)
- * Fuse H: 0xdc (512 words bootloader)
+ * Fuse H: 0xd4 (512 words bootloader)
  * Fuse L: 0xc2 (8Mhz internal RC-Osz.)
  */
 
-#if defined (__AVR_ATmega8__)
-#define VERSION_STRING		"TWIBOOT m8v2.1"
-#define SIGNATURE_BYTES		0x1E, 0x93, 0x07
-
-#elif defined (__AVR_ATmega88__)
-#define VERSION_STRING		"TWIBOOT m88v2.1"
-#define SIGNATURE_BYTES		0x1E, 0x93, 0x0A
-
-#elif defined (__AVR_ATmega168__)
-#define VERSION_STRING		"TWIBOOT m168v2.1"
-#define SIGNATURE_BYTES		0x1E, 0x94, 0x06
-
-#elif defined (__AVR_ATmega328P__)
-#define VERSION_STRING		"TWIBOOTm328pv2.1"
-#define SIGNATURE_BYTES		0x1E, 0x95, 0x0F
+#if defined (__AVR_ATmega328PB__)
+//#define VERSION_STRING		"TWIBOOTm328v2.1"
+#define VERSION_STRING		"MDBOOT328PBv2.1"
+#define SIGNATURE_BYTES		0x1E, 0x95, 0x16
 
 #else
 #error MCU not supported
 #endif
 
-#define EEPROM_SUPPORT		1
-#define LED_SUPPORT		1
+#define EEPROM_SUPPORT		0
+#define LED_SUPPORT		    1
 
 /* 25ms @8MHz */
 #define TIMER_RELOAD		(0xFF - 195)
@@ -72,13 +48,13 @@
 #define TIMEOUT			40
 
 #if LED_SUPPORT
-#define LED_INIT()		DDRB = ((1<<PORTB4) | (1<<PORTB5))
-#define LED_RT_ON()		PORTB |= (1<<PORTB4)
-#define LED_RT_OFF()		PORTB &= ~(1<<PORTB4)
-#define LED_GN_ON()		PORTB |= (1<<PORTB5)
-#define LED_GN_OFF()		PORTB &= ~(1<<PORTB5)
-#define LED_GN_TOGGLE()		PORTB ^= (1<<PORTB5)
-#define LED_OFF()		PORTB = 0x00
+#define LED_INIT()		  LED_set_dir(PORT_DIR_OUT);
+#define LED_RT_ON()		  LED_set_level(false);
+#define LED_RT_OFF()      LED_set_level(true);
+#define LED_GN_OFF()	  LED_set_level(true);
+#define LED_GN_ON()		  LED_set_level(false);
+#define LED_GN_TOGGLE()	  LED_toggle_level();
+#define LED_OFF()		  LED_set_level(true);
 #else
 #define LED_INIT()
 #define LED_RT_ON()
@@ -90,7 +66,11 @@
 #endif
 
 #ifndef TWI_ADDRESS
-#define TWI_ADDRESS		0x29
+// This is so the firmware can be updated "in-service"
+// The chain will need to be rebooted once the firmware has reloaded
+// unless we store the last boot (before firmware update) I2C address 
+// in EEPROM. This could be set to only load once.
+#define TWI_ADDRESS		0x07 // I2C "Reserved for future purposes"
 #endif
 
 /* SLA+R */
@@ -184,6 +164,7 @@ static void write_flash_page(void)
 	uint8_t size = SPM_PAGESIZE;
 	uint8_t *p = buf;
 
+	//Don't overwrite bootloader
 	if (pagestart >= BOOTLOADER_START)
 		return;
 
@@ -220,34 +201,31 @@ static void write_eeprom_byte(uint8_t val)
 	EEARH = (addr >> 8);
 	EEDR = val;
 	addr++;
-#if defined (__AVR_ATmega8__)
-	EECR |= (1<<EEMWE);
-	EECR |= (1<<EEWE);
-#elif defined (__AVR_ATmega88__) || defined (__AVR_ATmega168__) || defined (__AVR_ATmega328P__)
+
 	EECR |= (1<<EEMPE);
 	EECR |= (1<<EEPE);
-#endif
+
 	eeprom_busy_wait();
 }
 #endif /* EEPROM_SUPPORT */
 
-ISR(TWI_vect)
+ISR(TWI1_vect)
 {
 	static uint8_t bcnt;
 	uint8_t data;
 	uint8_t ack = (1<<TWEA);
 
-	switch (TWSR & 0xF8) {
+	switch (TWSR1 & 0xF8) {
 	/* SLA+W received, ACK returned -> receive data and ACK */
 	case 0x60:
 		bcnt = 0;
 		LED_RT_ON();
-		TWCR |= (1<<TWINT) | (1<<TWEA);
+		TWCR1 |= (1<<TWINT) | (1<<TWEA);
 		break;
 
 	/* prev. SLA+W, data received, ACK returned -> receive data and ACK */
 	case 0x80:
-		data = TWDR;
+		data = TWDR1;
 		switch (bcnt) {
 		case 0:
 			switch (data) {
@@ -335,7 +313,7 @@ ISR(TWI_vect)
 		if (ack == 0x00)
 			bcnt = 0;
 
-		TWCR |= (1<<TWINT) | ack;
+		TWCR1 |= (1<<TWINT) | ack;
 		break;
 
 	/* SLA+R received, ACK returned -> send data */
@@ -369,8 +347,8 @@ ISR(TWI_vect)
 			break;
 		}
 
-		TWDR = data;
-		TWCR |= (1<<TWINT) | (1<<TWEA);
+		TWDR1 = data;
+		TWCR1 |= (1<<TWINT) | (1<<TWEA);
 		break;
 
 	/* STOP or repeated START */
@@ -378,12 +356,12 @@ ISR(TWI_vect)
 	/* data sent, NACK returned */
 	case 0xC0:
 		LED_RT_OFF();
-		TWCR |= (1<<TWINT) | (1<<TWEA);
+		TWCR1 |= (1<<TWINT) | (1<<TWEA);
 		break;
 
 	/* illegal state -> reset hardware */
 	case 0xF8:
-		TWCR |= (1<<TWINT) | (1<<TWSTO) | (1<<TWEA);
+		TWCR1 |= (1<<TWINT) | (1<<TWSTO) | (1<<TWEA);
 		break;
 	}
 }
@@ -395,6 +373,7 @@ ISR(TIMER0_OVF_vect)
 
 	/* blink LED while running */
 	LED_GN_TOGGLE();
+	
 
 	/* count down for app-boot */
 	if (boot_timeout > 1)
@@ -412,7 +391,7 @@ static void (*jump_to_app)(void) __attribute__ ((noreturn)) = 0x0000;
  * system reset. So disable it as soon as possible.
  * automagically called on startup
  */
-#if defined (__AVR_ATmega88__) || defined (__AVR_ATmega168__) || defined (__AVR_ATmega328P__)
+#if defined (__AVR_ATmega328PB__)
 void disable_wdt_timer(void) __attribute__((naked, section(".init3")));
 void disable_wdt_timer(void)
 {
@@ -420,56 +399,43 @@ void disable_wdt_timer(void)
 	WDTCSR = (1<<WDCE) | (1<<WDE);
 	WDTCSR = (0<<WDE);
 }
-#endif
+#endif 
 
 int main(void) __attribute__ ((noreturn));
 int main(void)
 {
+    port_init();
+
 	LED_INIT();
 	LED_GN_ON();
 
 	/* move interrupt-vectors to bootloader */
 	/* timer0: running with F_CPU/1024, OVF interrupt */
-#if defined (__AVR_ATmega8__)
-	GICR = (1<<IVCE);
-	GICR = (1<<IVSEL);
-
-	TCCR0 = (1<<CS02) | (1<<CS00);
-	TIMSK = (1<<TOIE0);
-#elif defined (__AVR_ATmega88__) || defined (__AVR_ATmega168__) || defined (__AVR_ATmega328P__)
 	MCUCR = (1<<IVCE);
 	MCUCR = (1<<IVSEL);
 
 	TCCR0B = (1<<CS02) | (1<<CS00);
 	TIMSK0 = (1<<TOIE0);
-#endif
 
 	/* TWI init: set address, auto ACKs with interrupts */
-	TWAR = (TWI_ADDRESS<<1);
-	TWCR = (1<<TWEA) | (1<<TWEN) | (1<<TWIE);
+	TWAR1 = (TWI_ADDRESS<<1);
+	TWCR1 = (1<<TWEA) | (1<<TWEN) | (1<<TWIE);
 
 	sei();
 	while (cmd != CMD_BOOT_APPLICATION);
+
 	cli();
 
 	/* Disable TWI but keep address! */
-	TWCR = 0x00;
+	TWCR1 = 0x00;
 
 	/* disable timer0 */
 	/* move interrupt vectors back to application */
-#if defined (__AVR_ATmega8__)
-	TCCR0 = 0x00;
-	TIMSK = 0x00;
-
-	GICR = (1<<IVCE);
-	GICR = (0<<IVSEL);
-#elif defined (__AVR_ATmega88__) || defined (__AVR_ATmega168__) || defined (__AVR_ATmega328P__)
 	TIMSK0 = 0x00;
 	TCCR0B = 0x00;
 
 	MCUCR = (1<<IVCE);
 	MCUCR = (0<<IVSEL);
-#endif
 
 	LED_OFF();
 
