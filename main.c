@@ -67,7 +67,7 @@
 
 #ifndef TWI_ADDRESS
 // This is so the firmware can be updated "in-service"
-
+// It drops to an unused address.
 #define TWI_ADDRESS		0x07 // I2C "Reserved for future purposes"
 #endif
 
