@@ -67,9 +67,7 @@
 
 #ifndef TWI_ADDRESS
 // This is so the firmware can be updated "in-service"
-// The chain will need to be rebooted once the firmware has reloaded
-// unless we store the last boot (before firmware update) I2C address 
-// in EEPROM. This could be set to only load once.
+
 #define TWI_ADDRESS		0x07 // I2C "Reserved for future purposes"
 #endif
 
