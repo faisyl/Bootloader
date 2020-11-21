@@ -31,21 +31,23 @@
 
 #if defined (__AVR_ATmega328PB__)
 //#define VERSION_STRING		"TWIBOOTm328v2.1"
-#define VERSION_STRING		"MDBOOT328PBv2.1"
+#define VERSION_STRING		"KLBOOT328PBv2.1"
 #define SIGNATURE_BYTES		0x1E, 0x95, 0x16
 
 #else
 #error MCU not supported
 #endif
 
-#define EEPROM_SUPPORT		0
+#define EEPROM_SUPPORT		1
 #define LED_SUPPORT		    1
 
 /* 25ms @8MHz */
 #define TIMER_RELOAD		(0xFF - 195)
 
-/* 40 * 25ms */
+/* 40 * 25ms = 1 sec */
 #define TIMEOUT			40
+/* 200 * 25ms = 5 sec */
+//#define TIMEOUT			200
 
 #if LED_SUPPORT
 #define LED_INIT()		  LED_set_dir(PORT_DIR_OUT);
@@ -68,7 +70,7 @@
 #ifndef TWI_ADDRESS
 // This is so the firmware can be updated "in-service"
 // It drops to an unused address.
-#define TWI_ADDRESS		0x07 // I2C "Reserved for future purposes"
+#define TWI_ADDRESS		0x08 // I2C "Reserved for future purposes"
 #endif
 
 /* SLA+R */

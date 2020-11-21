@@ -4,14 +4,12 @@
    4               	__SREG__ =0x3f
    5               	__tmp_reg__ =0
    6               	__zero_reg__ =1
-   7               	 .text
-   8               	.Ltext0:
-   9               	 .cfi_sections .debug_frame
-  10               	 .section .text.I2C_0_initialization,"ax",@progbits
-  11               	.global I2C_0_initialization
-  13               	I2C_0_initialization:
-  14               	.LFB105:
-  15               	 .file 1 "port_init.c"
+   9               	 .text
+  10               	.Ltext0:
+ 111               	 .section .text.I2C_0_initialization,"ax",@progbits
+ 113               	.global I2C_0_initialization
+ 115               	I2C_0_initialization:
+ 116               	 .stabd 46,0,0
    1:port_init.c   **** /**
    2:port_init.c   ****  * \file
    3:port_init.c   ****  *
@@ -70,17 +68,16 @@
   56:port_init.c   **** /* configure pins and initialize registers */
   57:port_init.c   **** void I2C_0_initialization(void)
   58:port_init.c   **** {
-  16               	 .loc 1 58 0
-  17               	 .cfi_startproc
-  18               	 
-  19               	 
-  20               	 
-  21               	.L__stack_usage =0
-  22               	.LVL0:
-  23               	.LBB26:
-  24               	.LBB27:
-  25               	.LBB28:
-  26               	 .file 2 "port.h"
+ 118               	.LM0:
+ 119               	.LFBB1:
+ 120               	 
+ 121               	 
+ 122               	 
+ 123               	.L__stack_usage =0
+ 124               	.LBB34:
+ 125               	.LBB35:
+ 126               	.LBB36:
+ 128               	.Ltext1:
    1:port.h        **** 
    2:port.h        **** 
    3:port.h        **** /**
@@ -412,112 +409,61 @@
  329:port.h        **** 		break;
  330:port.h        **** 	case PORT_DIR_OUT:
  331:port.h        **** 		DDRC |= 1 << pin;
-  27               	 .loc 2 331 0
-  28 0000 3D9A      	 sbi 0x7,5
-  29               	.LVL1:
-  30               	.LBE28:
-  31               	.LBE27:
-  32               	.LBE26:
-  33               	.LBB29:
-  34               	.LBB30:
-  35               	.LBB31:
- 332:port.h        **** 		break;
- 333:port.h        **** 	case PORT_DIR_OFF:
- 334:port.h        **** 		DDRC |= ~(1 << pin);
- 335:port.h        **** 
- 336:port.h        **** 		PORTC |= 1 << pin;
- 337:port.h        **** 		break;
- 338:port.h        **** 	default:
- 339:port.h        **** 		break;
- 340:port.h        **** 	}
- 341:port.h        **** }
- 342:port.h        **** 
- 343:port.h        **** /**
- 344:port.h        ****  * \brief Set PORTC level
- 345:port.h        ****  *
- 346:port.h        ****  * Sets output level on the pins defined by the bit mask
- 347:port.h        ****  *
- 348:port.h        ****  * \param[in] mask  Bit mask where 1 means apply port level to the corresponding
- 349:port.h        ****  *                  pin
- 350:port.h        ****  * \param[in] level true  = Pin levels set to "high" state
- 351:port.h        ****  *                  false = Pin levels set to "low" state
- 352:port.h        ****  */
- 353:port.h        **** static inline void PORTC_set_port_level(const uint8_t mask, const bool level)
- 354:port.h        **** {
- 355:port.h        **** 	if (level) {
- 356:port.h        **** 		PORTC |= mask;
- 357:port.h        **** 	} else {
- 358:port.h        **** 		PORTC &= ~mask;
- 359:port.h        **** 	}
- 360:port.h        **** }
- 361:port.h        **** 
- 362:port.h        **** /**
- 363:port.h        ****  * \brief Set PORTC level
- 364:port.h        ****  *
- 365:port.h        ****  * Sets output level on a pin
- 366:port.h        ****  *
- 367:port.h        ****  * \param[in] pin       The pin number for device
- 368:port.h        ****  * \param[in] level true  = Pin level set to "high" state
- 369:port.h        ****  *                  false = Pin level set to "low" state
- 370:port.h        ****  */
- 371:port.h        **** static inline void PORTC_set_pin_level(const uint8_t pin, const bool level)
- 372:port.h        **** {
- 373:port.h        **** 	if (level) {
- 374:port.h        **** 		PORTC |= 1 << pin;
- 375:port.h        **** 	} else {
- 376:port.h        **** 		PORTC &= ~(1 << pin);
-  36               	 .loc 2 376 0
-  37 0002 4598      	 cbi 0x8,5
-  38               	.LVL2:
-  39               	.LBE31:
-  40               	.LBE30:
-  41               	.LBE29:
-  42               	.LBB32:
-  43               	.LBB33:
-  44               	.LBB34:
+ 130               	.LM1:
+ 131 0000 3D9A      	 sbi 0x7,5
+ 132               	.LBE36:
+ 133               	.LBE35:
+ 134               	.LBE34:
+ 135               	.LBB37:
+ 136               	.LBB38:
+ 137               	.LBB39:
+ 138               	.LBB40:
  276:port.h        **** 	}
-  45               	 .loc 2 276 0
-  46 0004 4598      	 cbi 0x8,5
-  47               	.LVL3:
-  48               	.LBE34:
-  49               	.LBE33:
-  50               	.LBE32:
-  51               	.LBB35:
-  52               	.LBB36:
-  53               	.LBB37:
- 331:port.h        **** 		break;
-  54               	 .loc 2 331 0
-  55 0006 3C9A      	 sbi 0x7,4
-  56               	.LVL4:
-  57               	.LBE37:
-  58               	.LBE36:
-  59               	.LBE35:
-  60               	.LBB38:
-  61               	.LBB39:
-  62               	.LBB40:
-  63               	 .loc 2 376 0
-  64 0008 4498      	 cbi 0x8,4
-  65               	.LVL5:
-  66               	.LBE40:
-  67               	.LBE39:
-  68               	.LBE38:
-  69               	.LBB41:
-  70               	.LBB42:
-  71               	.LBB43:
+ 140               	.LM2:
+ 141 0002 4598      	 cbi 0x8,5
+ 142               	.LBE40:
+ 143               	.LBE39:
+ 144               	.LBE38:
+ 145               	.LBE37:
+ 146               	.LBB41:
+ 147               	.LBB42:
+ 148               	.LBB43:
+ 149               	.LBB44:
+ 150 0004 4598      	 cbi 0x8,5
+ 151               	.LBE44:
+ 152               	.LBE43:
+ 153               	.LBE42:
+ 154               	.LBE41:
+ 155               	.LBB45:
+ 156               	.LBB46:
+ 157               	.LBB47:
+ 159               	.LM3:
+ 160 0006 3C9A      	 sbi 0x7,4
+ 161               	.LBE47:
+ 162               	.LBE46:
+ 163               	.LBE45:
+ 164               	.LBB48:
+ 165               	.LBB49:
+ 166               	.LBB50:
+ 167               	.LBB51:
  276:port.h        **** 	}
-  72               	 .loc 2 276 0
-  73 000a 4498      	 cbi 0x8,4
-  74               	.LVL6:
-  75 000c 0895      	 ret
-  76               	.LBE43:
-  77               	.LBE42:
-  78               	.LBE41:
-  79               	 .cfi_endproc
-  80               	.LFE105:
-  82               	 .section .text.I2C_1_initialization,"ax",@progbits
-  83               	.global I2C_1_initialization
-  85               	I2C_1_initialization:
-  86               	.LFB106:
+ 169               	.LM4:
+ 170 0008 4498      	 cbi 0x8,4
+ 171               	.LBE51:
+ 172               	.LBE50:
+ 173               	.LBE49:
+ 174               	.LBE48:
+ 175               	.LBB52:
+ 176               	.LBB53:
+ 177               	.LBB54:
+ 178               	.LBB55:
+ 179 000a 4498      	 cbi 0x8,4
+ 180               	 
+ 181               	.LBE55:
+ 182               	.LBE54:
+ 183               	.LBE53:
+ 184               	.LBE52:
+ 186               	.Ltext2:
   59:port_init.c   **** 
   60:port_init.c   **** 	PC5_set_dir(
   61:port_init.c   **** 	    // <y> Pin direction
@@ -564,20 +510,73 @@
  102:port_init.c   **** 	    PORT_PULL_OFF);
  103:port_init.c   **** 
  104:port_init.c   **** }
+ 188               	.LM5:
+ 189 000c 0895      	 ret
+ 191               	.Lscope1:
+ 193               	 .stabd 78,0,0
+ 194               	 .section .text.I2C_1_initialization,"ax",@progbits
+ 196               	.global I2C_1_initialization
+ 198               	I2C_1_initialization:
+ 199               	 .stabd 46,0,0
  105:port_init.c   **** 
  106:port_init.c   **** /* configure pins and initialize registers */
  107:port_init.c   **** void I2C_1_initialization(void)
  108:port_init.c   **** {
-  87               	 .loc 1 108 0
-  88               	 .cfi_startproc
-  89               	 
-  90               	 
-  91               	 
-  92               	.L__stack_usage =0
-  93               	.LVL7:
-  94               	.LBB60:
-  95               	.LBB61:
-  96               	.LBB62:
+ 201               	.LM6:
+ 202               	.LFBB2:
+ 203               	 
+ 204               	 
+ 205               	 
+ 206               	.L__stack_usage =0
+ 207               	.LBB76:
+ 208               	.LBB77:
+ 209               	.LBB78:
+ 211               	.Ltext3:
+ 332:port.h        **** 		break;
+ 333:port.h        **** 	case PORT_DIR_OFF:
+ 334:port.h        **** 		DDRC |= ~(1 << pin);
+ 335:port.h        **** 
+ 336:port.h        **** 		PORTC |= 1 << pin;
+ 337:port.h        **** 		break;
+ 338:port.h        **** 	default:
+ 339:port.h        **** 		break;
+ 340:port.h        **** 	}
+ 341:port.h        **** }
+ 342:port.h        **** 
+ 343:port.h        **** /**
+ 344:port.h        ****  * \brief Set PORTC level
+ 345:port.h        ****  *
+ 346:port.h        ****  * Sets output level on the pins defined by the bit mask
+ 347:port.h        ****  *
+ 348:port.h        ****  * \param[in] mask  Bit mask where 1 means apply port level to the corresponding
+ 349:port.h        ****  *                  pin
+ 350:port.h        ****  * \param[in] level true  = Pin levels set to "high" state
+ 351:port.h        ****  *                  false = Pin levels set to "low" state
+ 352:port.h        ****  */
+ 353:port.h        **** static inline void PORTC_set_port_level(const uint8_t mask, const bool level)
+ 354:port.h        **** {
+ 355:port.h        **** 	if (level) {
+ 356:port.h        **** 		PORTC |= mask;
+ 357:port.h        **** 	} else {
+ 358:port.h        **** 		PORTC &= ~mask;
+ 359:port.h        **** 	}
+ 360:port.h        **** }
+ 361:port.h        **** 
+ 362:port.h        **** /**
+ 363:port.h        ****  * \brief Set PORTC level
+ 364:port.h        ****  *
+ 365:port.h        ****  * Sets output level on a pin
+ 366:port.h        ****  *
+ 367:port.h        ****  * \param[in] pin       The pin number for device
+ 368:port.h        ****  * \param[in] level true  = Pin level set to "high" state
+ 369:port.h        ****  *                  false = Pin level set to "low" state
+ 370:port.h        ****  */
+ 371:port.h        **** static inline void PORTC_set_pin_level(const uint8_t pin, const bool level)
+ 372:port.h        **** {
+ 373:port.h        **** 	if (level) {
+ 374:port.h        **** 		PORTC |= 1 << pin;
+ 375:port.h        **** 	} else {
+ 376:port.h        **** 		PORTC &= ~(1 << pin);
  377:port.h        **** 	}
  378:port.h        **** }
  379:port.h        **** 
@@ -904,48 +903,43 @@
  700:port.h        **** 	switch (direction) {
  701:port.h        **** 	case PORT_DIR_IN:
  702:port.h        **** 		DDRE &= ~(1 << pin);
-  97               	 .loc 2 702 0
-  98 0000 6998      	 cbi 0xd,1
-  99               	.LVL8:
- 100               	.LBE62:
- 101               	.LBE61:
- 102               	.LBE60:
- 103               	.LBB63:
- 104               	.LBB64:
- 105               	.LBB65:
+ 213               	.LM7:
+ 214 0000 6998      	 cbi 0xd,1
+ 215               	.LBE78:
+ 216               	.LBE77:
+ 217               	.LBE76:
+ 218               	.LBB79:
+ 219               	.LBB80:
+ 220               	.LBB81:
+ 221               	.LBB82:
  650:port.h        **** 	}
- 106               	 .loc 2 650 0
- 107 0002 7198      	 cbi 0xe,1
- 108               	.LVL9:
- 109               	.LBE65:
- 110               	.LBE64:
- 111               	.LBE63:
- 112               	.LBB66:
- 113               	.LBB67:
- 114               	.LBB68:
- 115               	 .loc 2 702 0
- 116 0004 6898      	 cbi 0xd,0
- 117               	.LVL10:
- 118               	.LBE68:
- 119               	.LBE67:
- 120               	.LBE66:
- 121               	.LBB69:
- 122               	.LBB70:
- 123               	.LBB71:
+ 223               	.LM8:
+ 224 0002 7198      	 cbi 0xe,1
+ 225               	.LBE82:
+ 226               	.LBE81:
+ 227               	.LBE80:
+ 228               	.LBE79:
+ 229               	.LBB83:
+ 230               	.LBB84:
+ 231               	.LBB85:
+ 233               	.LM9:
+ 234 0004 6898      	 cbi 0xd,0
+ 235               	.LBE85:
+ 236               	.LBE84:
+ 237               	.LBE83:
+ 238               	.LBB86:
+ 239               	.LBB87:
+ 240               	.LBB88:
+ 241               	.LBB89:
  650:port.h        **** 	}
- 124               	 .loc 2 650 0
- 125 0006 7098      	 cbi 0xe,0
- 126               	.LVL11:
- 127 0008 0895      	 ret
- 128               	.LBE71:
- 129               	.LBE70:
- 130               	.LBE69:
- 131               	 .cfi_endproc
- 132               	.LFE106:
- 134               	 .section .text.port_init,"ax",@progbits
- 135               	.global port_init
- 137               	port_init:
- 138               	.LFB107:
+ 243               	.LM10:
+ 244 0006 7098      	 cbi 0xe,0
+ 245               	 
+ 246               	.LBE89:
+ 247               	.LBE88:
+ 248               	.LBE87:
+ 249               	.LBE86:
+ 251               	.Ltext4:
  109:port_init.c   **** 
  110:port_init.c   **** 	PE1_set_dir(
  111:port_init.c   **** 	    // <y> Pin direction
@@ -978,114 +972,119 @@
  138:port_init.c   **** 	    PORT_PULL_OFF);
  139:port_init.c   **** 
  140:port_init.c   **** }
+ 253               	.LM11:
+ 254 0008 0895      	 ret
+ 256               	.Lscope2:
+ 258               	 .stabd 78,0,0
+ 259               	 .section .text.port_init,"ax",@progbits
+ 261               	.global port_init
+ 263               	port_init:
+ 264               	 .stabd 46,0,0
  141:port_init.c   **** 
  142:port_init.c   **** void port_init()
  143:port_init.c   **** {
- 139               	 .loc 1 143 0
- 140               	 .cfi_startproc
- 141               	 
- 142               	 
- 143               	 
- 144               	.L__stack_usage =0
+ 266               	.LM12:
+ 267               	.LFBB3:
+ 268               	 
+ 269               	 
+ 270               	 
+ 271               	.L__stack_usage =0
  144:port_init.c   **** 	I2C_0_initialization();
- 145               	 .loc 1 144 0
- 146 0000 0E94 0000 	 call I2C_0_initialization
- 147               	.LVL12:
- 148               	.LBB112:
- 149               	.LBB113:
- 150               	.LBB114:
+ 273               	.LM13:
+ 274 0000 0E94 0000 	 call I2C_0_initialization
+ 275               	.LBB136:
+ 276               	.LBB137:
+ 277               	.LBB138:
+ 279               	.Ltext5:
  141:port.h        **** 		break;
- 151               	 .loc 2 141 0
- 152 0004 2698      	 cbi 0x4,6
- 153               	.LVL13:
- 154               	.LBE114:
- 155               	.LBE113:
- 156               	.LBE112:
- 157               	.LBB115:
- 158               	.LBB116:
- 159               	.LBB117:
+ 281               	.LM14:
+ 282 0004 2698      	 cbi 0x4,6
+ 283               	.LBE138:
+ 284               	.LBE137:
+ 285               	.LBE136:
+ 286               	.LBB139:
+ 287               	.LBB140:
+ 288               	.LBB141:
   89:port.h        **** 	}
- 160               	 .loc 2 89 0
- 161 0006 2E98      	 cbi 0x5,6
- 162               	.LVL14:
- 163               	.LBE117:
- 164               	.LBE116:
- 165               	.LBE115:
- 166               	.LBB118:
- 167               	.LBB119:
- 168               	.LBB120:
+ 290               	.LM15:
+ 291 0006 2E98      	 cbi 0x5,6
+ 292               	.LBE141:
+ 293               	.LBE140:
+ 294               	.LBE139:
+ 295               	.LBB142:
+ 296               	.LBB143:
+ 297               	.LBB144:
  328:port.h        **** 		break;
- 169               	 .loc 2 328 0
- 170 0008 3998      	 cbi 0x7,1
- 171               	.LVL15:
- 172               	.LBE120:
- 173               	.LBE119:
- 174               	.LBE118:
- 175               	.LBB121:
- 176               	.LBB122:
- 177               	.LBB123:
+ 299               	.LM16:
+ 300 0008 3998      	 cbi 0x7,1
+ 301               	.LBE144:
+ 302               	.LBE143:
+ 303               	.LBE142:
+ 304               	.LBB145:
+ 305               	.LBB146:
+ 306               	.LBB147:
+ 307               	.LBB148:
  276:port.h        **** 	}
- 178               	 .loc 2 276 0
- 179 000a 4198      	 cbi 0x8,1
- 180               	.LVL16:
- 181               	.LBE123:
- 182               	.LBE122:
- 183               	.LBE121:
- 184               	.LBB124:
- 185               	.LBB125:
- 186               	.LBB126:
+ 309               	.LM17:
+ 310 000a 4198      	 cbi 0x8,1
+ 311               	.LBE148:
+ 312               	.LBE147:
+ 313               	.LBE146:
+ 314               	.LBE145:
+ 315               	.LBB149:
+ 316               	.LBB150:
+ 317               	.LBB151:
  515:port.h        **** 		break;
- 187               	 .loc 2 515 0
- 188 000c 5398      	 cbi 0xa,3
- 189               	.LVL17:
- 190               	.LBE126:
- 191               	.LBE125:
- 192               	.LBE124:
- 193               	.LBB127:
- 194               	.LBB128:
- 195               	.LBB129:
+ 319               	.LM18:
+ 320 000c 5398      	 cbi 0xa,3
+ 321               	.LBE151:
+ 322               	.LBE150:
+ 323               	.LBE149:
+ 324               	.LBB152:
+ 325               	.LBB153:
+ 326               	.LBB154:
+ 327               	.LBB155:
  463:port.h        **** 	}
- 196               	 .loc 2 463 0
- 197 000e 5B98      	 cbi 0xb,3
- 198               	.LVL18:
- 199               	.LBE129:
- 200               	.LBE128:
- 201               	.LBE127:
- 202               	.LBB130:
- 203               	.LBB131:
- 204               	.LBB132:
+ 329               	.LM19:
+ 330 000e 5B98      	 cbi 0xb,3
+ 331               	.LBE155:
+ 332               	.LBE154:
+ 333               	.LBE153:
+ 334               	.LBE152:
+ 335               	.LBB156:
+ 336               	.LBB157:
+ 337               	.LBB158:
  515:port.h        **** 		break;
- 205               	 .loc 2 515 0
- 206 0010 5598      	 cbi 0xa,5
- 207               	.LVL19:
- 208               	.LBE132:
- 209               	.LBE131:
- 210               	.LBE130:
- 211               	.LBB133:
- 212               	.LBB134:
- 213               	.LBB135:
+ 339               	.LM20:
+ 340 0010 5598      	 cbi 0xa,5
+ 341               	.LBE158:
+ 342               	.LBE157:
+ 343               	.LBE156:
+ 344               	.LBB159:
+ 345               	.LBB160:
+ 346               	.LBB161:
+ 347               	.LBB162:
  463:port.h        **** 	}
- 214               	 .loc 2 463 0
- 215 0012 5D98      	 cbi 0xb,5
- 216               	.LVL20:
- 217               	.LBE135:
- 218               	.LBE134:
- 219               	.LBE133:
- 220               	.LBB136:
- 221               	.LBB137:
- 222               	.LBB138:
+ 349               	.LM21:
+ 350 0012 5D98      	 cbi 0xb,5
+ 351               	.LBE162:
+ 352               	.LBE161:
+ 353               	.LBE160:
+ 354               	.LBE159:
+ 355               	.LBB163:
+ 356               	.LBB164:
+ 357               	.LBB165:
  703:port.h        **** 		break;
  704:port.h        **** 	case PORT_DIR_OUT:
  705:port.h        **** 		DDRE |= 1 << pin;
- 223               	 .loc 2 705 0
- 224 0014 6B9A      	 sbi 0xd,3
- 225               	.LVL21:
- 226               	.LBE138:
- 227               	.LBE137:
- 228               	.LBE136:
- 229               	.LBB139:
- 230               	.LBB140:
- 231               	.LBB141:
+ 359               	.LM22:
+ 360 0014 6B9A      	 sbi 0xd,3
+ 361               	.LBE165:
+ 362               	.LBE164:
+ 363               	.LBE163:
+ 364               	.LBB166:
+ 365               	.LBB167:
+ 366               	.LBB168:
  706:port.h        **** 		break;
  707:port.h        **** 	case PORT_DIR_OFF:
  708:port.h        **** 		DDRE |= ~(1 << pin);
@@ -1129,28 +1128,145 @@
  746:port.h        **** {
  747:port.h        **** 	if (level) {
  748:port.h        **** 		PORTE |= 1 << pin;
- 232               	 .loc 2 748 0
- 233 0016 739A      	 sbi 0xe,3
- 234               	.LVL22:
- 235 0018 0895      	 ret
- 236               	.LBE141:
- 237               	.LBE140:
- 238               	.LBE139:
- 239               	 .cfi_endproc
- 240               	.LFE107:
- 242               	 .text
- 243               	.Letext0:
- 244               	 .file 3 "atmel_start_pins.h"
- 245               	 .file 4 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\include\\stdint.h"
+ 368               	.LM23:
+ 369 0016 739A      	 sbi 0xe,3
+ 370               	 
+ 371               	.LBE168:
+ 372               	.LBE167:
+ 373               	.LBE166:
+ 375               	.Ltext6:
+ 145:port_init.c   **** 
+ 146:port_init.c   **** 	//I2C_1_initialization();
+ 147:port_init.c   **** 
+ 148:port_init.c   **** 	/* PORT setting on PB6 */
+ 149:port_init.c   **** 
+ 150:port_init.c   **** 	// Set pin direction to input
+ 151:port_init.c   **** 	ADDR_IN_set_dir(PORT_DIR_IN);
+ 152:port_init.c   **** 
+ 153:port_init.c   **** 	ADDR_IN_set_pull_mode(
+ 154:port_init.c   **** 	    // <y> Pull configuration
+ 155:port_init.c   **** 	    // <id> pad_pull_config
+ 156:port_init.c   **** 	    // <PORT_PULL_OFF"> Off
+ 157:port_init.c   **** 	    // <PORT_PULL_UP"> Pull-up
+ 158:port_init.c   **** 	    PORT_PULL_OFF);
+ 159:port_init.c   **** 
+ 160:port_init.c   **** 	/* PORT setting on PB7 */
+ 161:port_init.c   **** 
+ 162:port_init.c   **** 	// Set pin direction to input
+ 163:port_init.c   **** 	/*MST_set_dir(PORT_DIR_IN);
+ 164:port_init.c   **** 
+ 165:port_init.c   **** 	MST_set_pull_mode(
+ 166:port_init.c   **** 	    // <y> Pull configuration
+ 167:port_init.c   **** 	    // <id> pad_pull_config
+ 168:port_init.c   **** 	    // <PORT_PULL_OFF"> Off
+ 169:port_init.c   **** 	    // <PORT_PULL_UP"> Pull-up
+ 170:port_init.c   **** 	    PORT_PULL_UP);
+ 171:port_init.c   **** 		*/
+ 172:port_init.c   **** 	/* PORT setting on PC0 */
+ 173:port_init.c   **** 
+ 174:port_init.c   **** 	// Set pin direction to output
+ 175:port_init.c   **** 	/*SYNC_set_dir(PORT_DIR_IN);
+ 176:port_init.c   **** 
+ 177:port_init.c   **** 	SYNC_set_pull_mode(
+ 178:port_init.c   **** 	    // <y> Pull configuration
+ 179:port_init.c   **** 	    // <id> pad_pull_config
+ 180:port_init.c   **** 	    // <PORT_PULL_OFF"> Off
+ 181:port_init.c   **** 	    // <PORT_PULL_UP"> Pull-up
+ 182:port_init.c   **** 	    PORT_PULL_OFF);*/
+ 183:port_init.c   **** 
+ 184:port_init.c   **** 
+ 185:port_init.c   **** 	/* PORT setting on PC1 */
+ 186:port_init.c   **** 
+ 187:port_init.c   **** 	// Set pin direction to input
+ 188:port_init.c   **** 	ADDR_OUT_set_dir(PORT_DIR_IN);
+ 189:port_init.c   **** 
+ 190:port_init.c   **** 	ADDR_OUT_set_pull_mode(
+ 191:port_init.c   **** 	// <y> Pull configuration
+ 192:port_init.c   **** 	// <id> pad_pull_config
+ 193:port_init.c   **** 	// <PORT_PULL_OFF"> Off
+ 194:port_init.c   **** 	// <PORT_PULL_UP"> Pull-up
+ 195:port_init.c   **** 	PORT_PULL_OFF);
+ 196:port_init.c   **** 
+ 197:port_init.c   **** 
+ 198:port_init.c   **** 	/* PORT setting on PC2 */
+ 199:port_init.c   **** 
+ 200:port_init.c   **** 	// Set pin direction to output
+ 201:port_init.c   **** 	/*XSHUT_set_dir(PORT_DIR_OUT);
+ 202:port_init.c   **** 
+ 203:port_init.c   **** 	XSHUT_set_level(
+ 204:port_init.c   **** 	    // <y> Initial level
+ 205:port_init.c   **** 	    // <id> pad_initial_level
+ 206:port_init.c   **** 	    // <false"> Low
+ 207:port_init.c   **** 	    // <true"> High
+ 208:port_init.c   **** 	    true);*/
+ 209:port_init.c   **** 
+ 210:port_init.c   **** 	/* PORT setting on PC3 */
+ 211:port_init.c   **** 
+ 212:port_init.c   **** 	// Set pin direction to input
+ 213:port_init.c   **** 	/*GPIO1_set_dir(PORT_DIR_IN);
+ 214:port_init.c   **** 
+ 215:port_init.c   **** 	GPIO1_set_pull_mode(
+ 216:port_init.c   **** 	    // <y> Pull configuration
+ 217:port_init.c   **** 	    // <id> pad_pull_config
+ 218:port_init.c   **** 	    // <PORT_PULL_OFF"> Off
+ 219:port_init.c   **** 	    // <PORT_PULL_UP"> Pull-up
+ 220:port_init.c   **** 	    PORT_PULL_OFF);*/
+ 221:port_init.c   **** 
+ 222:port_init.c   **** 	/* PORT setting on PD3 */
+ 223:port_init.c   **** 
+ 224:port_init.c   **** 	// Set pin direction to input
+ 225:port_init.c   **** 	GND_set_dir(PORT_DIR_IN);
+ 226:port_init.c   **** 
+ 227:port_init.c   **** 	GND_set_pull_mode(
+ 228:port_init.c   **** 	    // <y> Pull configuration
+ 229:port_init.c   **** 	    // <id> pad_pull_config
+ 230:port_init.c   **** 	    // <PORT_PULL_OFF"> Off
+ 231:port_init.c   **** 	    // <PORT_PULL_UP"> Pull-up
+ 232:port_init.c   **** 	    PORT_PULL_OFF);
+ 233:port_init.c   **** 
+ 234:port_init.c   **** 	/* PORT setting on PD5 */
+ 235:port_init.c   **** 
+ 236:port_init.c   **** 	// Set pin direction to input
+ 237:port_init.c   **** 	GND2_set_dir(PORT_DIR_IN);
+ 238:port_init.c   **** 
+ 239:port_init.c   **** 	GND2_set_pull_mode(
+ 240:port_init.c   **** 	    // <y> Pull configuration
+ 241:port_init.c   **** 	    // <id> pad_pull_config
+ 242:port_init.c   **** 	    // <PORT_PULL_OFF"> Off
+ 243:port_init.c   **** 	    // <PORT_PULL_UP"> Pull-up
+ 244:port_init.c   **** 	    PORT_PULL_OFF);
+ 245:port_init.c   **** 
+ 246:port_init.c   **** 	/* PORT setting on PE3 */
+ 247:port_init.c   **** 
+ 248:port_init.c   **** 	// Set pin direction to output
+ 249:port_init.c   **** 	LED_set_dir(PORT_DIR_OUT);
+ 250:port_init.c   **** 
+ 251:port_init.c   **** 	LED_set_level(
+ 252:port_init.c   **** 	    // <y> Initial level
+ 253:port_init.c   **** 	    // <id> pad_initial_level
+ 254:port_init.c   **** 	    // <false"> Low
+ 255:port_init.c   **** 	    // <true"> High
+ 256:port_init.c   **** 	    true);
+ 257:port_init.c   **** 
+ 258:port_init.c   **** 
+ 259:port_init.c   **** 
+ 260:port_init.c   **** }
+ 377               	.LM24:
+ 378 0018 0895      	 ret
+ 380               	.Lscope3:
+ 382               	 .stabd 78,0,0
+ 383               	 .text
+ 385               	.Letext0:
+ 386               	 .ident "GCC: (GNU) 9.1.0"
 DEFINED SYMBOLS
-                            *ABS*:00000000 port_init.c
-    {standard input}:2      *ABS*:0000003e __SP_H__
-    {standard input}:3      *ABS*:0000003d __SP_L__
-    {standard input}:4      *ABS*:0000003f __SREG__
-    {standard input}:5      *ABS*:00000000 __tmp_reg__
-    {standard input}:6      *ABS*:00000001 __zero_reg__
-    {standard input}:13     .text.I2C_0_initialization:00000000 I2C_0_initialization
-    {standard input}:85     .text.I2C_1_initialization:00000000 I2C_1_initialization
-    {standard input}:137    .text.port_init:00000000 port_init
+                            *ABS*:0000000000000000 port_init.c
+    {standard input}:2      *ABS*:000000000000003e __SP_H__
+    {standard input}:3      *ABS*:000000000000003d __SP_L__
+    {standard input}:4      *ABS*:000000000000003f __SREG__
+    {standard input}:5      *ABS*:0000000000000000 __tmp_reg__
+    {standard input}:6      *ABS*:0000000000000001 __zero_reg__
+    {standard input}:115    .text.I2C_0_initialization:0000000000000000 I2C_0_initialization
+    {standard input}:198    .text.I2C_1_initialization:0000000000000000 I2C_1_initialization
+    {standard input}:263    .text.port_init:0000000000000000 port_init
 
 NO UNDEFINED SYMBOLS

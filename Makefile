@@ -10,19 +10,20 @@ SOURCE = $(wildcard *.c)
 # select MCU
 MCU = atmega328pb
 
-AVRDUDE_PROG := -c avr910 -b 115200 -P /dev/ttyUSB0
+#AVRDUDE_PROG := -c avr910 -b 115200 -P /dev/ttyUSB0
 #AVRDUDE_PROG := -c dragon_isp -P usb
+AVRDUDE_PROG := -p m328pb -c usbasp
 
 # ---------------------------------------------------------------------------
 
 ifeq ($(MCU), atmega328pb)
 # (8Mhz internal RC-Osz., 2.7V BOD)
-AVRDUDE_MCU=m328pb -F
-AVRDUDE_FUSES=lfuse:w:0xc2:m hfuse:w:0xdc:m efuse:w:0xfd:m
+AVRDUDE_MCU=m328pb
+AVRDUDE_FUSES=lfuse:w:0xc2:m hfuse:w:0xda:m efuse:w:0xf5:m
 
 #This places the code at the end of the flash
 #This is in bytes and the application section maps are in words (2bytes)
-BOOTLOADER_START=0x7C00
+BOOTLOADER_START=0x7800
 endif
 
 # ---------------------------------------------------------------------------
@@ -34,7 +35,7 @@ LDFLAGS = -Wl,-Map,$(@:.elf=.map),--cref,--relax,--gc-sections,--section-start=.
 # ---------------------------------------------------------------------------
 
 $(TARGET): $(TARGET).elf
-	@$(SIZE) -B -x --mcu=$(MCU) $<
+	@$(SIZE) -B -x $<
 
 $(TARGET).elf: $(SOURCE:.c=.o)
 	@echo " Linking file:  $@"

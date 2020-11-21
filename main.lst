@@ -4,14 +4,12 @@
    4               	__SREG__ =0x3f
    5               	__tmp_reg__ =0
    6               	__zero_reg__ =1
-   7               	 .text
-   8               	.Ltext0:
-   9               	 .cfi_sections .debug_frame
-  10               	 .section .text.__vector_40,"ax",@progbits
-  11               	.global __vector_40
-  13               	__vector_40:
-  14               	.LFB107:
-  15               	 .file 1 "main.c"
+   9               	 .text
+  10               	.Ltext0:
+ 121               	 .section .text.__vector_40,"ax",@progbits
+ 123               	.global __vector_40
+ 125               	__vector_40:
+ 126               	 .stabd 46,0,0
    1:main.c        **** /***************************************************************************
    2:main.c        ****  *   Copyright (C) 08/2010 by Olaf Rempel                                  *
    3:main.c        ****  *   razzor@kopf-tisch.de                                                  *
@@ -45,46 +43,46 @@
   31:main.c        **** 
   32:main.c        **** #if defined (__AVR_ATmega328PB__)
   33:main.c        **** //#define VERSION_STRING		"TWIBOOTm328v2.1"
-  34:main.c        **** #define VERSION_STRING		"MDBOOT328PBv2.1"
+  34:main.c        **** #define VERSION_STRING		"KLBOOT328PBv2.1"
   35:main.c        **** #define SIGNATURE_BYTES		0x1E, 0x95, 0x16
   36:main.c        **** 
   37:main.c        **** #else
   38:main.c        **** #error MCU not supported
   39:main.c        **** #endif
   40:main.c        **** 
-  41:main.c        **** #define EEPROM_SUPPORT		0
+  41:main.c        **** #define EEPROM_SUPPORT		1
   42:main.c        **** #define LED_SUPPORT		    1
   43:main.c        **** 
   44:main.c        **** /* 25ms @8MHz */
   45:main.c        **** #define TIMER_RELOAD		(0xFF - 195)
   46:main.c        **** 
-  47:main.c        **** /* 40 * 25ms */
+  47:main.c        **** /* 40 * 25ms = 1 sec */
   48:main.c        **** #define TIMEOUT			40
-  49:main.c        **** 
-  50:main.c        **** #if LED_SUPPORT
-  51:main.c        **** #define LED_INIT()		  LED_set_dir(PORT_DIR_OUT);
-  52:main.c        **** #define LED_RT_ON()		  LED_set_level(false);
-  53:main.c        **** #define LED_RT_OFF()      LED_set_level(true);
-  54:main.c        **** #define LED_GN_OFF()	  LED_set_level(true);
-  55:main.c        **** #define LED_GN_ON()		  LED_set_level(false);
-  56:main.c        **** #define LED_GN_TOGGLE()	  LED_toggle_level();
-  57:main.c        **** #define LED_OFF()		  LED_set_level(true);
-  58:main.c        **** #else
-  59:main.c        **** #define LED_INIT()
-  60:main.c        **** #define LED_RT_ON()
-  61:main.c        **** #define LED_RT_OFF()
-  62:main.c        **** #define LED_GN_ON()
-  63:main.c        **** #define LED_GN_OFF()
-  64:main.c        **** #define LED_GN_TOGGLE()
-  65:main.c        **** #define LED_OFF()
-  66:main.c        **** #endif
-  67:main.c        **** 
-  68:main.c        **** #ifndef TWI_ADDRESS
-  69:main.c        **** // This is so the firmware can be updated "in-service"
-  70:main.c        **** // The chain will need to be rebooted once the firmware has reloaded
-  71:main.c        **** // unless we store the last boot (before firmware update) I2C address 
-  72:main.c        **** // in EEPROM. This could be set to only load once.
-  73:main.c        **** #define TWI_ADDRESS		0x07 // I2C "Reserved for future purposes"
+  49:main.c        **** /* 200 * 25ms = 5 sec */
+  50:main.c        **** //#define TIMEOUT			200
+  51:main.c        **** 
+  52:main.c        **** #if LED_SUPPORT
+  53:main.c        **** #define LED_INIT()		  LED_set_dir(PORT_DIR_OUT);
+  54:main.c        **** #define LED_RT_ON()		  LED_set_level(false);
+  55:main.c        **** #define LED_RT_OFF()      LED_set_level(true);
+  56:main.c        **** #define LED_GN_OFF()	  LED_set_level(true);
+  57:main.c        **** #define LED_GN_ON()		  LED_set_level(false);
+  58:main.c        **** #define LED_GN_TOGGLE()	  LED_toggle_level();
+  59:main.c        **** #define LED_OFF()		  LED_set_level(true);
+  60:main.c        **** #else
+  61:main.c        **** #define LED_INIT()
+  62:main.c        **** #define LED_RT_ON()
+  63:main.c        **** #define LED_RT_OFF()
+  64:main.c        **** #define LED_GN_ON()
+  65:main.c        **** #define LED_GN_OFF()
+  66:main.c        **** #define LED_GN_TOGGLE()
+  67:main.c        **** #define LED_OFF()
+  68:main.c        **** #endif
+  69:main.c        **** 
+  70:main.c        **** #ifndef TWI_ADDRESS
+  71:main.c        **** // This is so the firmware can be updated "in-service"
+  72:main.c        **** // It drops to an unused address.
+  73:main.c        **** #define TWI_ADDRESS		0x08 // I2C "Reserved for future purposes"
   74:main.c        **** #endif
   75:main.c        **** 
   76:main.c        **** /* SLA+R */
@@ -225,102 +223,252 @@
  211:main.c        **** 
  212:main.c        **** ISR(TWI1_vect)
  213:main.c        **** {
-  16               	 .loc 1 213 0
-  17               	 .cfi_startproc
-  18 0000 1F92      	 push r1
-  19               	.LCFI0:
-  20               	 .cfi_def_cfa_offset 3
-  21               	 .cfi_offset 1,-2
-  22 0002 0F92      	 push r0
-  23               	.LCFI1:
-  24               	 .cfi_def_cfa_offset 4
-  25               	 .cfi_offset 0,-3
-  26 0004 0FB6      	 in r0,__SREG__
-  27 0006 0F92      	 push r0
-  28 0008 1124      	 clr __zero_reg__
-  29 000a 2F93      	 push r18
-  30               	.LCFI2:
-  31               	 .cfi_def_cfa_offset 5
-  32               	 .cfi_offset 18,-4
-  33 000c 3F93      	 push r19
-  34               	.LCFI3:
-  35               	 .cfi_def_cfa_offset 6
-  36               	 .cfi_offset 19,-5
-  37 000e 4F93      	 push r20
-  38               	.LCFI4:
-  39               	 .cfi_def_cfa_offset 7
-  40               	 .cfi_offset 20,-6
-  41 0010 5F93      	 push r21
-  42               	.LCFI5:
-  43               	 .cfi_def_cfa_offset 8
-  44               	 .cfi_offset 21,-7
-  45 0012 6F93      	 push r22
-  46               	.LCFI6:
-  47               	 .cfi_def_cfa_offset 9
-  48               	 .cfi_offset 22,-8
-  49 0014 7F93      	 push r23
-  50               	.LCFI7:
-  51               	 .cfi_def_cfa_offset 10
-  52               	 .cfi_offset 23,-9
-  53 0016 8F93      	 push r24
-  54               	.LCFI8:
-  55               	 .cfi_def_cfa_offset 11
-  56               	 .cfi_offset 24,-10
-  57 0018 9F93      	 push r25
-  58               	.LCFI9:
-  59               	 .cfi_def_cfa_offset 12
-  60               	 .cfi_offset 25,-11
-  61 001a AF93      	 push r26
-  62               	.LCFI10:
-  63               	 .cfi_def_cfa_offset 13
-  64               	 .cfi_offset 26,-12
-  65 001c BF93      	 push r27
-  66               	.LCFI11:
-  67               	 .cfi_def_cfa_offset 14
-  68               	 .cfi_offset 27,-13
-  69 001e EF93      	 push r30
-  70               	.LCFI12:
-  71               	 .cfi_def_cfa_offset 15
-  72               	 .cfi_offset 30,-14
-  73 0020 FF93      	 push r31
-  74               	.LCFI13:
-  75               	 .cfi_def_cfa_offset 16
-  76               	 .cfi_offset 31,-15
-  77               	 
-  78               	 
-  79               	 
-  80               	.L__stack_usage =15
-  81               	.LVL0:
+ 128               	.LM0:
+ 129               	.LFBB1:
+ 130 0000 0F92 0FB6 	 __gcc_isr 1
+ 130      0F92 1F92 
+ 130      1124 2F93 
+ 131 000c 3F93      	 push r19
+ 132 000e 4F93      	 push r20
+ 133 0010 5F93      	 push r21
+ 134 0012 6F93      	 push r22
+ 135 0014 8F93      	 push r24
+ 136 0016 9F93      	 push r25
+ 137 0018 AF93      	 push r26
+ 138 001a BF93      	 push r27
+ 139 001c EF93      	 push r30
+ 140 001e FF93      	 push r31
+ 141               	 
+ 142               	 
+ 143               	 
+ 144               	.L__stack_usage =10+__gcc_isr.n_pushed
  214:main.c        **** 	static uint8_t bcnt;
  215:main.c        **** 	uint8_t data;
  216:main.c        **** 	uint8_t ack = (1<<TWEA);
  217:main.c        **** 
  218:main.c        **** 	switch (TWSR1 & 0xF8) {
-  82               	 .loc 1 218 0
-  83 0022 8091 D900 	 lds r24,217
-  84 0026 887F      	 andi r24,lo8(-8)
-  85 0028 883A      	 cpi r24,lo8(-88)
-  86 002a 01F4      	 brne .+2
-  87 002c 00C0      	 rjmp .L3
-  88 002e 00F4      	 brsh .L4
-  89 0030 8038      	 cpi r24,lo8(-128)
-  90 0032 01F0      	 breq .L5
-  91 0034 803A      	 cpi r24,lo8(-96)
-  92 0036 01F4      	 brne .+2
-  93 0038 00C0      	 rjmp .L6
-  94 003a 8036      	 cpi r24,lo8(96)
-  95 003c 01F0      	 breq .+2
-  96 003e 00C0      	 rjmp .L1
+ 146               	.LM1:
+ 147 0020 8091 D900 	 lds r24,217
+ 148 0024 887F      	 andi r24,lo8(-8)
+ 150               	.LM2:
+ 151 0026 883A      	 cpi r24,lo8(-88)
+ 152 0028 01F4      	 brne .+2
+ 153 002a 00C0      	 rjmp .L2
+ 154 002c 00F4      	 brsh .L3
+ 155 002e 8038      	 cpi r24,lo8(-128)
+ 156 0030 01F0      	 breq .L4
+ 157 0032 803A      	 cpi r24,lo8(-96)
+ 158 0034 01F4      	 brne .+2
+ 159 0036 00C0      	 rjmp .L5
+ 160 0038 8036      	 cpi r24,lo8(96)
+ 161 003a 01F0      	 breq .L6
+ 162               	.L1:
+ 163               	 
  219:main.c        **** 	/* SLA+W received, ACK returned -> receive data and ACK */
  220:main.c        **** 	case 0x60:
  221:main.c        **** 		bcnt = 0;
-  97               	 .loc 1 221 0
-  98 0040 1092 0000 	 sts bcnt.2192,__zero_reg__
-  99               	.LVL1:
- 100               	.LBB24:
- 101               	.LBB25:
- 102               	.LBB26:
- 103               	 .file 2 "port.h"
+ 222:main.c        **** 		LED_RT_ON();
+ 223:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWEA);
+ 224:main.c        **** 		break;
+ 225:main.c        **** 
+ 226:main.c        **** 	/* prev. SLA+W, data received, ACK returned -> receive data and ACK */
+ 227:main.c        **** 	case 0x80:
+ 228:main.c        **** 		data = TWDR1;
+ 229:main.c        **** 		switch (bcnt) {
+ 230:main.c        **** 		case 0:
+ 231:main.c        **** 			switch (data) {
+ 232:main.c        **** 			case CMD_SWITCH_APPLICATION:
+ 233:main.c        **** 			case CMD_WRITE_MEMORY:
+ 234:main.c        **** 				bcnt++;
+ 235:main.c        **** 				/* no break */
+ 236:main.c        **** 
+ 237:main.c        **** 			case CMD_WAIT:
+ 238:main.c        **** 				/* abort countdown */
+ 239:main.c        **** 				boot_timeout = 0;
+ 240:main.c        **** 				break;
+ 241:main.c        **** 
+ 242:main.c        **** 			default:
+ 243:main.c        **** 				/* boot app now */
+ 244:main.c        **** 				cmd = CMD_BOOT_APPLICATION;
+ 245:main.c        **** 				ack = (0<<TWEA);
+ 246:main.c        **** 				break;
+ 247:main.c        **** 			}
+ 248:main.c        **** 			cmd = data;
+ 249:main.c        **** 			break;
+ 250:main.c        **** 
+ 251:main.c        **** 		case 1:
+ 252:main.c        **** 			switch (cmd) {
+ 253:main.c        **** 			case CMD_SWITCH_APPLICATION:
+ 254:main.c        **** 				if (data == BOOTTYPE_APPLICATION) {
+ 255:main.c        **** 					cmd = CMD_BOOT_APPLICATION;
+ 256:main.c        **** 				}
+ 257:main.c        **** 				ack = (0<<TWEA);
+ 258:main.c        **** 				break;
+ 259:main.c        **** 
+ 260:main.c        **** 			case CMD_WRITE_MEMORY:
+ 261:main.c        **** 				bcnt++;
+ 262:main.c        **** 				if (data == MEMTYPE_CHIPINFO) {
+ 263:main.c        **** 					cmd = CMD_WRITE_CHIPINFO;
+ 264:main.c        **** 
+ 265:main.c        **** 				} else if (data == MEMTYPE_FLASH) {
+ 266:main.c        **** 					cmd = CMD_WRITE_FLASH;
+ 267:main.c        **** #if (EEPROM_SUPPORT)
+ 268:main.c        **** 				} else if (data == MEMTYPE_EEPROM) {
+ 269:main.c        **** 					cmd = CMD_WRITE_EEPROM;
+ 270:main.c        **** #endif
+ 271:main.c        **** 				} else {
+ 272:main.c        **** 					ack = (0<<TWEA);
+ 273:main.c        **** 				}
+ 274:main.c        **** 				break;
+ 275:main.c        **** 
+ 276:main.c        **** 			default:
+ 277:main.c        **** 				ack = (0<<TWEA);
+ 278:main.c        **** 				break;
+ 279:main.c        **** 			}
+ 280:main.c        **** 			break;
+ 281:main.c        **** 
+ 282:main.c        **** 		case 2:
+ 283:main.c        **** 		case 3:
+ 284:main.c        **** 			addr <<= 8;
+ 285:main.c        **** 			addr |= data;
+ 286:main.c        **** 			bcnt++;
+ 287:main.c        **** 			break;
+ 288:main.c        **** 
+ 289:main.c        **** 		default:
+ 290:main.c        **** 			switch (cmd) {
+ 291:main.c        **** 			case CMD_WRITE_FLASH:
+ 292:main.c        **** 				buf[bcnt -4] = data;
+ 293:main.c        **** 				if (bcnt < sizeof(buf) +3) {
+ 294:main.c        **** 					bcnt++;
+ 295:main.c        **** 				} else {
+ 296:main.c        **** 					write_flash_page();
+ 297:main.c        **** 					ack = (0<<TWEA);
+ 298:main.c        **** 				}
+ 299:main.c        **** 				break;
+ 300:main.c        **** #if (EEPROM_SUPPORT)
+ 301:main.c        **** 			case CMD_WRITE_EEPROM:
+ 302:main.c        **** 				write_eeprom_byte(data);
+ 303:main.c        **** 				bcnt++;
+ 304:main.c        **** 				break;
+ 305:main.c        **** #endif
+ 306:main.c        **** 			default:
+ 307:main.c        **** 				ack = (0<<TWEA);
+ 308:main.c        **** 				break;
+ 309:main.c        **** 			}
+ 310:main.c        **** 			break;
+ 311:main.c        **** 		}
+ 312:main.c        **** 
+ 313:main.c        **** 		if (ack == 0x00)
+ 314:main.c        **** 			bcnt = 0;
+ 315:main.c        **** 
+ 316:main.c        **** 		TWCR1 |= (1<<TWINT) | ack;
+ 317:main.c        **** 		break;
+ 318:main.c        **** 
+ 319:main.c        **** 	/* SLA+R received, ACK returned -> send data */
+ 320:main.c        **** 	case 0xA8:
+ 321:main.c        **** 		bcnt = 0;
+ 322:main.c        **** 		LED_RT_ON();
+ 323:main.c        **** 
+ 324:main.c        **** 	/* prev. SLA+R, data sent, ACK returned -> send data */
+ 325:main.c        **** 	case 0xB8:
+ 326:main.c        **** 		switch (cmd) {
+ 327:main.c        **** 		case CMD_READ_VERSION:
+ 328:main.c        **** 			data = info[bcnt++];
+ 329:main.c        **** 			bcnt %= sizeof(info);
+ 330:main.c        **** 			break;
+ 331:main.c        **** 
+ 332:main.c        **** 		case CMD_READ_CHIPINFO:
+ 333:main.c        **** 			data = chipinfo[bcnt++];
+ 334:main.c        **** 			bcnt %= sizeof(chipinfo);
+ 335:main.c        **** 			break;
+ 336:main.c        **** 
+ 337:main.c        **** 		case CMD_READ_FLASH:
+ 338:main.c        **** 			data = pgm_read_byte_near(addr++);
+ 339:main.c        **** 			break;
+ 340:main.c        **** #if (EEPROM_SUPPORT)
+ 341:main.c        **** 		case CMD_READ_EEPROM:
+ 342:main.c        **** 			data = read_eeprom_byte();
+ 343:main.c        **** 			break;
+ 344:main.c        **** #endif
+ 345:main.c        **** 		default:
+ 346:main.c        **** 			data = 0xFF;
+ 347:main.c        **** 			break;
+ 348:main.c        **** 		}
+ 349:main.c        **** 
+ 350:main.c        **** 		TWDR1 = data;
+ 351:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWEA);
+ 352:main.c        **** 		break;
+ 353:main.c        **** 
+ 354:main.c        **** 	/* STOP or repeated START */
+ 355:main.c        **** 	case 0xA0:
+ 356:main.c        **** 	/* data sent, NACK returned */
+ 357:main.c        **** 	case 0xC0:
+ 358:main.c        **** 		LED_RT_OFF();
+ 359:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWEA);
+ 360:main.c        **** 		break;
+ 361:main.c        **** 
+ 362:main.c        **** 	/* illegal state -> reset hardware */
+ 363:main.c        **** 	case 0xF8:
+ 364:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWSTO) | (1<<TWEA);
+ 365:main.c        **** 		break;
+ 366:main.c        **** 	}
+ 367:main.c        **** }
+ 165               	.LM3:
+ 166 003c FF91      	 pop r31
+ 167 003e EF91      	 pop r30
+ 168 0040 BF91      	 pop r27
+ 169 0042 AF91      	 pop r26
+ 170 0044 9F91      	 pop r25
+ 171 0046 8F91      	 pop r24
+ 172 0048 6F91      	 pop r22
+ 173 004a 5F91      	 pop r21
+ 174 004c 4F91      	 pop r20
+ 175 004e 3F91      	 pop r19
+ 176 0050 2F91 1F90 	 __gcc_isr 2
+ 176      0F90 0FBE 
+ 176      0F90 
+ 177 005a 1895      	 reti
+ 178               	.L3:
+ 218:main.c        **** 	/* SLA+W received, ACK returned -> receive data and ACK */
+ 180               	.LM4:
+ 181 005c 803C      	 cpi r24,lo8(-64)
+ 182 005e 01F4      	 brne .+2
+ 183 0060 00C0      	 rjmp .L5
+ 184 0062 883F      	 cpi r24,lo8(-8)
+ 185 0064 01F4      	 brne .+2
+ 186 0066 00C0      	 rjmp .L8
+ 187 0068 883B      	 cpi r24,lo8(-72)
+ 188 006a 01F4      	 brne .L1
+ 189               	.L9:
+ 326:main.c        **** 		case CMD_READ_VERSION:
+ 191               	.LM5:
+ 192 006c 8091 0000 	 lds r24,cmd
+ 193 0070 8232      	 cpi r24,lo8(34)
+ 194 0072 01F4      	 brne .+2
+ 195 0074 00C0      	 rjmp .L31
+ 196 0076 00F0      	 brlo .+2
+ 197 0078 00C0      	 rjmp .L32
+ 198 007a 8130      	 cpi r24,lo8(1)
+ 199 007c 01F4      	 brne .+2
+ 200 007e 00C0      	 rjmp .L33
+ 201 0080 8231      	 cpi r24,lo8(18)
+ 202 0082 01F4      	 brne .+2
+ 203 0084 00C0      	 rjmp .L34
+ 204               	.L58:
+ 205 0086 EFEF      	 ldi r30,lo8(-1)
+ 206               	.L35:
+ 350:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWEA);
+ 208               	.LM6:
+ 209 0088 E093 DB00 	 sts 219,r30
+ 210 008c 00C0      	 rjmp .L61
+ 211               	.L6:
+ 221:main.c        **** 		LED_RT_ON();
+ 213               	.LM7:
+ 214 008e 1092 0000 	 sts bcnt.2091,__zero_reg__
+ 215               	.LBB28:
+ 216               	.LBB29:
+ 217               	.LBB30:
+ 219               	.Ltext1:
    1:port.h        **** 
    2:port.h        **** 
    3:port.h        **** /**
@@ -1071,603 +1219,469 @@
  748:port.h        **** 		PORTE |= 1 << pin;
  749:port.h        **** 	} else {
  750:port.h        **** 		PORTE &= ~(1 << pin);
- 104               	 .loc 2 750 0
- 105 0044 7398      	 cbi 0xe,3
- 106               	.LVL2:
- 107 0046 00C0      	 rjmp .L61
- 108               	.L4:
- 109               	.LBE26:
- 110               	.LBE25:
- 111               	.LBE24:
- 218:main.c        **** 	/* SLA+W received, ACK returned -> receive data and ACK */
- 112               	 .loc 1 218 0
- 113 0048 803C      	 cpi r24,lo8(-64)
- 114 004a 01F4      	 brne .+2
- 115 004c 00C0      	 rjmp .L6
- 116 004e 883F      	 cpi r24,lo8(-8)
- 117 0050 01F4      	 brne .+2
- 118 0052 00C0      	 rjmp .L8
- 119 0054 883B      	 cpi r24,lo8(-72)
- 120 0056 01F0      	 breq .+2
- 121 0058 00C0      	 rjmp .L1
- 122 005a 00C0      	 rjmp .L9
- 123               	.L5:
- 222:main.c        **** 		LED_RT_ON();
- 223:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWEA);
- 224:main.c        **** 		break;
- 225:main.c        **** 
- 226:main.c        **** 	/* prev. SLA+W, data received, ACK returned -> receive data and ACK */
- 227:main.c        **** 	case 0x80:
- 228:main.c        **** 		data = TWDR1;
- 124               	 .loc 1 228 0
- 125 005c 9091 DB00 	 lds r25,219
- 126               	.LVL3:
- 229:main.c        **** 		switch (bcnt) {
- 127               	 .loc 1 229 0
- 128 0060 8091 0000 	 lds r24,bcnt.2192
- 129 0064 8130      	 cpi r24,lo8(1)
- 130 0066 01F0      	 breq .L11
- 131 0068 00F0      	 brlo .L12
- 132 006a 8430      	 cpi r24,lo8(4)
- 133 006c 00F4      	 brsh .L10
- 230:main.c        **** 		case 0:
- 231:main.c        **** 			switch (data) {
- 232:main.c        **** 			case CMD_SWITCH_APPLICATION:
- 233:main.c        **** 			case CMD_WRITE_MEMORY:
- 234:main.c        **** 				bcnt++;
- 235:main.c        **** 				/* no break */
- 236:main.c        **** 
- 237:main.c        **** 			case CMD_WAIT:
- 238:main.c        **** 				/* abort countdown */
- 239:main.c        **** 				boot_timeout = 0;
- 240:main.c        **** 				break;
- 241:main.c        **** 
- 242:main.c        **** 			default:
- 243:main.c        **** 				/* boot app now */
- 244:main.c        **** 				cmd = CMD_BOOT_APPLICATION;
- 245:main.c        **** 				ack = (0<<TWEA);
- 246:main.c        **** 				break;
- 247:main.c        **** 			}
- 248:main.c        **** 			cmd = data;
- 249:main.c        **** 			break;
- 250:main.c        **** 
- 251:main.c        **** 		case 1:
- 252:main.c        **** 			switch (cmd) {
- 253:main.c        **** 			case CMD_SWITCH_APPLICATION:
- 254:main.c        **** 				if (data == BOOTTYPE_APPLICATION) {
- 255:main.c        **** 					cmd = CMD_BOOT_APPLICATION;
- 256:main.c        **** 				}
- 257:main.c        **** 				ack = (0<<TWEA);
- 258:main.c        **** 				break;
- 259:main.c        **** 
- 260:main.c        **** 			case CMD_WRITE_MEMORY:
- 261:main.c        **** 				bcnt++;
- 262:main.c        **** 				if (data == MEMTYPE_CHIPINFO) {
- 263:main.c        **** 					cmd = CMD_WRITE_CHIPINFO;
- 264:main.c        **** 
- 265:main.c        **** 				} else if (data == MEMTYPE_FLASH) {
- 266:main.c        **** 					cmd = CMD_WRITE_FLASH;
- 267:main.c        **** #if (EEPROM_SUPPORT)
- 268:main.c        **** 				} else if (data == MEMTYPE_EEPROM) {
- 269:main.c        **** 					cmd = CMD_WRITE_EEPROM;
- 270:main.c        **** #endif
- 271:main.c        **** 				} else {
- 272:main.c        **** 					ack = (0<<TWEA);
- 273:main.c        **** 				}
- 274:main.c        **** 				break;
- 275:main.c        **** 
- 276:main.c        **** 			default:
- 277:main.c        **** 				ack = (0<<TWEA);
- 278:main.c        **** 				break;
- 279:main.c        **** 			}
- 280:main.c        **** 			break;
- 281:main.c        **** 
- 282:main.c        **** 		case 2:
- 283:main.c        **** 		case 3:
- 284:main.c        **** 			addr <<= 8;
- 285:main.c        **** 			addr |= data;
- 134               	 .loc 1 285 0
- 135 006e 20E0      	 ldi r18,0
- 136 0070 30E0      	 ldi r19,0
- 137 0072 3091 0000 	 lds r19,addr
- 138 0076 292B      	 or r18,r25
- 139 0078 3093 0000 	 sts addr+1,r19
- 140 007c 2093 0000 	 sts addr,r18
- 141 0080 00C0      	 rjmp .L58
- 142               	.L12:
- 231:main.c        **** 			case CMD_SWITCH_APPLICATION:
- 143               	 .loc 1 231 0
- 144 0082 9923      	 tst r25
- 145 0084 01F0      	 breq .L15
- 146 0086 9330      	 cpi r25,lo8(3)
- 147 0088 00F4      	 brsh .L14
- 234:main.c        **** 				/* no break */
- 148               	 .loc 1 234 0
- 149 008a 81E0      	 ldi r24,lo8(1)
- 150 008c 8093 0000 	 sts bcnt.2192,r24
- 151               	.L15:
- 239:main.c        **** 				break;
- 152               	 .loc 1 239 0
- 153 0090 1092 0000 	 sts boot_timeout,__zero_reg__
- 216:main.c        **** 
- 154               	 .loc 1 216 0
- 155 0094 80E4      	 ldi r24,lo8(64)
- 240:main.c        **** 
- 156               	 .loc 1 240 0
- 157 0096 00C0      	 rjmp .L17
- 158               	.L14:
- 244:main.c        **** 				ack = (0<<TWEA);
- 159               	 .loc 1 244 0
- 160 0098 81E2      	 ldi r24,lo8(33)
- 161 009a 8093 0000 	 sts cmd,r24
- 162               	.LVL4:
- 245:main.c        **** 				break;
- 163               	 .loc 1 245 0
- 164 009e 80E0      	 ldi r24,0
- 165               	.LVL5:
- 166               	.L17:
- 248:main.c        **** 			break;
- 167               	 .loc 1 248 0
- 168 00a0 9093 0000 	 sts cmd,r25
- 286:main.c        **** 			bcnt++;
- 287:main.c        **** 			break;
- 288:main.c        **** 
- 289:main.c        **** 		default:
- 290:main.c        **** 			switch (cmd) {
- 291:main.c        **** 			case CMD_WRITE_FLASH:
- 292:main.c        **** 				buf[bcnt -4] = data;
- 293:main.c        **** 				if (bcnt < sizeof(buf) +3) {
- 294:main.c        **** 					bcnt++;
- 295:main.c        **** 				} else {
- 296:main.c        **** 					write_flash_page();
- 297:main.c        **** 					ack = (0<<TWEA);
- 298:main.c        **** 				}
- 299:main.c        **** 				break;
- 300:main.c        **** #if (EEPROM_SUPPORT)
- 301:main.c        **** 			case CMD_WRITE_EEPROM:
- 302:main.c        **** 				write_eeprom_byte(data);
- 303:main.c        **** 				bcnt++;
- 304:main.c        **** 				break;
- 305:main.c        **** #endif
- 306:main.c        **** 			default:
- 307:main.c        **** 				ack = (0<<TWEA);
- 308:main.c        **** 				break;
- 309:main.c        **** 			}
- 310:main.c        **** 			break;
- 311:main.c        **** 		}
- 312:main.c        **** 
- 313:main.c        **** 		if (ack == 0x00)
- 169               	 .loc 1 313 0
- 170 00a4 8823      	 tst r24
- 171 00a6 01F4      	 brne .+2
- 172 00a8 00C0      	 rjmp .L18
- 173 00aa 00C0      	 rjmp .L19
- 174               	.LVL6:
- 175               	.L11:
- 252:main.c        **** 			case CMD_SWITCH_APPLICATION:
- 176               	 .loc 1 252 0
- 177 00ac 8091 0000 	 lds r24,cmd
- 178 00b0 8130      	 cpi r24,lo8(1)
- 179 00b2 01F0      	 breq .L21
- 180 00b4 8230      	 cpi r24,lo8(2)
- 181 00b6 01F0      	 breq .L22
- 182 00b8 00C0      	 rjmp .L18
- 183               	.L21:
- 254:main.c        **** 					cmd = CMD_BOOT_APPLICATION;
- 184               	 .loc 1 254 0
- 185 00ba 9038      	 cpi r25,lo8(-128)
- 186 00bc 01F0      	 breq .+2
- 187 00be 00C0      	 rjmp .L18
- 255:main.c        **** 				}
- 188               	 .loc 1 255 0
- 189 00c0 81E2      	 ldi r24,lo8(33)
- 190 00c2 8093 0000 	 sts cmd,r24
- 191 00c6 00C0      	 rjmp .L18
- 192               	.L22:
- 261:main.c        **** 				if (data == MEMTYPE_CHIPINFO) {
- 193               	 .loc 1 261 0
- 194 00c8 8093 0000 	 sts bcnt.2192,r24
- 262:main.c        **** 					cmd = CMD_WRITE_CHIPINFO;
- 195               	 .loc 1 262 0
- 196 00cc 9111      	 cpse r25,__zero_reg__
- 197 00ce 00C0      	 rjmp .L24
- 263:main.c        **** 
- 198               	 .loc 1 263 0
- 199 00d0 82E1      	 ldi r24,lo8(18)
- 200 00d2 00C0      	 rjmp .L59
- 201               	.L24:
- 265:main.c        **** 					cmd = CMD_WRITE_FLASH;
- 202               	 .loc 1 265 0
- 203 00d4 9130      	 cpi r25,lo8(1)
- 204 00d6 01F0      	 breq .+2
- 205 00d8 00C0      	 rjmp .L18
- 266:main.c        **** #if (EEPROM_SUPPORT)
- 206               	 .loc 1 266 0
- 207 00da 82E2      	 ldi r24,lo8(34)
- 208               	.L59:
- 209 00dc 8093 0000 	 sts cmd,r24
- 210 00e0 00C0      	 rjmp .L25
- 211               	.L10:
+ 221               	.LM8:
+ 222 0092 7398      	 cbi 0xe,3
+ 223               	.L61:
+ 224               	.LBE30:
+ 225               	.LBE29:
+ 226               	.LBE28:
+ 228               	.Ltext2:
+ 359:main.c        **** 		break;
+ 230               	.LM9:
+ 231 0094 8091 DC00 	 lds r24,220
+ 232 0098 806C      	 ori r24,lo8(-64)
+ 233 009a 00C0      	 rjmp .L59
+ 234               	.L4:
+ 228:main.c        **** 		switch (bcnt) {
+ 236               	.LM10:
+ 237 009c 8091 DB00 	 lds r24,219
+ 229:main.c        **** 		case 0:
+ 239               	.LM11:
+ 240 00a0 9091 0000 	 lds r25,bcnt.2091
+ 241 00a4 9130      	 cpi r25,lo8(1)
+ 242 00a6 01F4      	 brne .+2
+ 243 00a8 00C0      	 rjmp .L10
+ 244 00aa 00F0      	 brlo .L11
+ 245 00ac 2EEF      	 ldi r18,lo8(-2)
+ 246 00ae 290F      	 add r18,r25
+ 247 00b0 2230      	 cpi r18,lo8(2)
+ 248 00b2 00F4      	 brsh .+2
+ 249 00b4 00C0      	 rjmp .L53
  290:main.c        **** 			case CMD_WRITE_FLASH:
- 212               	 .loc 1 290 0
- 213 00e2 2091 0000 	 lds r18,cmd
- 214 00e6 2232      	 cpi r18,lo8(34)
- 215 00e8 01F0      	 breq .+2
- 216 00ea 00C0      	 rjmp .L18
- 292:main.c        **** 				if (bcnt < sizeof(buf) +3) {
- 217               	 .loc 1 292 0
- 218 00ec E82F      	 mov r30,r24
- 219 00ee F0E0      	 ldi r31,0
- 220 00f0 E050      	 subi r30,lo8(-(buf-4))
- 221 00f2 F040      	 sbci r31,hi8(-(buf-4))
- 222 00f4 9083      	 st Z,r25
- 293:main.c        **** 					bcnt++;
- 223               	 .loc 1 293 0
- 224 00f6 8338      	 cpi r24,lo8(-125)
- 225 00f8 00F4      	 brsh .L28
- 226               	.L58:
+ 251               	.LM12:
+ 252 00b6 2091 0000 	 lds r18,cmd
+ 253 00ba 2232      	 cpi r18,lo8(34)
+ 254 00bc 01F4      	 brne .+2
+ 255 00be 00C0      	 rjmp .L24
+ 256 00c0 2233      	 cpi r18,lo8(50)
+ 257 00c2 01F4      	 brne .L17
+ 258               	.LBB31:
+ 259               	.LBB32:
+ 200:main.c        **** 	EEARH = (addr >> 8);
+ 261               	.LM13:
+ 262 00c4 9091 0000 	 lds r25,addr
+ 263 00c8 91BD      	 out 0x21,r25
+ 201:main.c        **** 	EEDR = val;
+ 265               	.LM14:
+ 266 00ca 9091 0000 	 lds r25,addr+1
+ 201:main.c        **** 	EEDR = val;
+ 268               	.LM15:
+ 269 00ce 92BD      	 out 0x22,r25
+ 202:main.c        **** 	addr++;
+ 271               	.LM16:
+ 272 00d0 80BD      	 out 0x20,r24
+ 203:main.c        **** 
+ 274               	.LM17:
+ 275 00d2 8091 0000 	 lds r24,addr
+ 276 00d6 9091 0000 	 lds r25,addr+1
+ 277 00da 0196      	 adiw r24,1
+ 278 00dc 9093 0000 	 sts addr+1,r25
+ 279 00e0 8093 0000 	 sts addr,r24
+ 205:main.c        **** 	EECR |= (1<<EEPE);
+ 281               	.LM18:
+ 282 00e4 FA9A      	 sbi 0x1f,2
+ 206:main.c        **** 
+ 284               	.LM19:
+ 285 00e6 F99A      	 sbi 0x1f,1
+ 286               	.L30:
+ 208:main.c        **** }
+ 288               	.LM20:
+ 289 00e8 F999      	 sbic 0x1f,1
+ 290 00ea 00C0      	 rjmp .L30
+ 291               	.LBE32:
+ 292               	.LBE31:
+ 303:main.c        **** 				break;
+ 294               	.LM21:
+ 295 00ec 8091 0000 	 lds r24,bcnt.2091
+ 296 00f0 8F5F      	 subi r24,lo8(-(1))
+ 297 00f2 8093 0000 	 sts bcnt.2091,r24
+ 298 00f6 00C0      	 rjmp .L56
+ 299               	.L11:
+ 300 00f8 8823      	 tst r24
+ 301 00fa 01F0      	 breq .L14
+ 302 00fc 9FEF      	 ldi r25,lo8(-1)
+ 303 00fe 980F      	 add r25,r24
+ 304 0100 9230      	 cpi r25,lo8(2)
+ 305 0102 00F4      	 brsh .L15
+ 234:main.c        **** 				/* no break */
+ 307               	.LM22:
+ 308 0104 91E0      	 ldi r25,lo8(1)
+ 309 0106 9093 0000 	 sts bcnt.2091,r25
+ 310               	.L14:
+ 239:main.c        **** 				break;
+ 312               	.LM23:
+ 313 010a 1092 0000 	 sts boot_timeout,__zero_reg__
+ 314               	.L55:
+ 269:main.c        **** #endif
+ 316               	.LM24:
+ 317 010e 8093 0000 	 sts cmd,r24
+ 318               	.L56:
+ 216:main.c        **** 
+ 320               	.LM25:
+ 321 0112 80E4      	 ldi r24,lo8(64)
+ 322               	.L16:
+ 316:main.c        **** 		break;
+ 324               	.LM26:
+ 325 0114 9091 DC00 	 lds r25,220
+ 326 0118 892B      	 or r24,r25
+ 327 011a 8068      	 ori r24,lo8(-128)
+ 328               	.L59:
+ 364:main.c        **** 		break;
+ 330               	.LM27:
+ 331 011c 8093 DC00 	 sts 220,r24
+ 333               	.LM28:
+ 334 0120 00C0      	 rjmp .L1
+ 335               	.L15:
+ 244:main.c        **** 				ack = (0<<TWEA);
+ 337               	.LM29:
+ 338 0122 91E2      	 ldi r25,lo8(33)
+ 339 0124 9093 0000 	 sts cmd,r25
+ 340               	.L54:
+ 255:main.c        **** 				}
+ 342               	.LM30:
+ 343 0128 8093 0000 	 sts cmd,r24
+ 344 012c 00C0      	 rjmp .L17
+ 345               	.L10:
+ 252:main.c        **** 			case CMD_SWITCH_APPLICATION:
+ 347               	.LM31:
+ 348 012e 9091 0000 	 lds r25,cmd
+ 349 0132 9130      	 cpi r25,lo8(1)
+ 350 0134 01F0      	 breq .L18
+ 351 0136 9230      	 cpi r25,lo8(2)
+ 352 0138 01F0      	 breq .L19
+ 353               	.L17:
+ 314:main.c        **** 
+ 355               	.LM32:
+ 356 013a 1092 0000 	 sts bcnt.2091,__zero_reg__
+ 357 013e 80E0      	 ldi r24,0
+ 358 0140 00C0      	 rjmp .L16
+ 359               	.L18:
+ 254:main.c        **** 					cmd = CMD_BOOT_APPLICATION;
+ 361               	.LM33:
+ 362 0142 8038      	 cpi r24,lo8(-128)
+ 363 0144 01F4      	 brne .L17
+ 255:main.c        **** 				}
+ 365               	.LM34:
+ 366 0146 81E2      	 ldi r24,lo8(33)
+ 367 0148 00C0      	 rjmp .L54
+ 368               	.L19:
+ 261:main.c        **** 				if (data == MEMTYPE_CHIPINFO) {
+ 370               	.LM35:
+ 371 014a 9093 0000 	 sts bcnt.2091,r25
+ 262:main.c        **** 					cmd = CMD_WRITE_CHIPINFO;
+ 373               	.LM36:
+ 374 014e 8111      	 cpse r24,__zero_reg__
+ 375 0150 00C0      	 rjmp .L21
+ 263:main.c        **** 
+ 377               	.LM37:
+ 378 0152 82E1      	 ldi r24,lo8(18)
+ 379 0154 00C0      	 rjmp .L55
+ 380               	.L21:
+ 265:main.c        **** 					cmd = CMD_WRITE_FLASH;
+ 382               	.LM38:
+ 383 0156 8130      	 cpi r24,lo8(1)
+ 384 0158 01F4      	 brne .L22
+ 266:main.c        **** #if (EEPROM_SUPPORT)
+ 386               	.LM39:
+ 387 015a 82E2      	 ldi r24,lo8(34)
+ 388 015c 00C0      	 rjmp .L55
+ 389               	.L22:
+ 268:main.c        **** 					cmd = CMD_WRITE_EEPROM;
+ 391               	.LM40:
+ 392 015e 8230      	 cpi r24,lo8(2)
+ 393 0160 01F4      	 brne .L17
+ 269:main.c        **** #endif
+ 395               	.LM41:
+ 396 0162 82E3      	 ldi r24,lo8(50)
+ 397 0164 00C0      	 rjmp .L55
+ 398               	.L53:
+ 284:main.c        **** 			addr |= data;
+ 400               	.LM42:
+ 401 0166 20E0      	 ldi r18,0
+ 402 0168 3091 0000 	 lds r19,addr
+ 285:main.c        **** 			bcnt++;
+ 404               	.LM43:
+ 405 016c 282B      	 or r18,r24
+ 406 016e 3093 0000 	 sts addr+1,r19
+ 407 0172 2093 0000 	 sts addr,r18
+ 408               	.L60:
  294:main.c        **** 				} else {
- 227               	 .loc 1 294 0
- 228 00fa 8F5F      	 subi r24,lo8(-(1))
- 229 00fc 8093 0000 	 sts bcnt.2192,r24
- 230 0100 00C0      	 rjmp .L25
- 231               	.L28:
- 232               	.LBB27:
- 233               	.LBB28:
+ 410               	.LM44:
+ 411 0176 9F5F      	 subi r25,lo8(-(1))
+ 412 0178 9093 0000 	 sts bcnt.2091,r25
+ 413 017c 00C0      	 rjmp .L56
+ 414               	.L24:
+ 229:main.c        **** 		case 0:
+ 416               	.LM45:
+ 417 017e E92F      	 mov r30,r25
+ 418 0180 F0E0      	 ldi r31,0
+ 292:main.c        **** 				if (bcnt < sizeof(buf) +3) {
+ 420               	.LM46:
+ 421 0182 E050      	 subi r30,lo8(-(buf-4))
+ 422 0184 F040      	 sbci r31,hi8(-(buf-4))
+ 423 0186 8083      	 st Z,r24
+ 293:main.c        **** 					bcnt++;
+ 425               	.LM47:
+ 426 0188 9338      	 cpi r25,lo8(-125)
+ 427 018a 00F0      	 brlo .L60
+ 428               	.LBB33:
+ 429               	.LBB34:
  163:main.c        **** 	uint8_t size = SPM_PAGESIZE;
- 234               	 .loc 1 163 0
- 235 0102 8091 0000 	 lds r24,addr
- 236 0106 9091 0000 	 lds r25,addr+1
- 237               	.LVL7:
+ 431               	.LM48:
+ 432 018c 8091 0000 	 lds r24,addr
+ 433 0190 9091 0000 	 lds r25,addr+1
  168:main.c        **** 		return;
- 238               	 .loc 1 168 0
- 239 010a 8115      	 cp r24,__zero_reg__
- 240 010c 2CE7      	 ldi r18,124
- 241 010e 9207      	 cpc r25,r18
- 242 0110 00F0      	 brlo .+2
- 243 0112 00C0      	 rjmp .L18
+ 435               	.LM49:
+ 436 0194 8115      	 cp r24,__zero_reg__
+ 437 0196 28E7      	 ldi r18,120
+ 438 0198 9207      	 cpc r25,r18
+ 439 019a 00F4      	 brsh .L17
  171:main.c        **** 	boot_spm_busy_wait();
- 244               	 .loc 1 171 0
- 245 0114 23E0      	 ldi r18,lo8(3)
- 246 0116 FC01      	 movw r30,r24
- 247               	 
- 248               	 
- 249 0118 2093 5700 	 sts 87,r18
- 250 011c E895      	 spm
- 251               	 
- 252               	 
- 253               	 
- 254               	.L29:
+ 441               	.LM50:
+ 442 019c 23E0      	 ldi r18,lo8(3)
+ 443 019e FC01      	 movw r30,r24
+ 444               	 
+ 445               	 
+ 446 01a0 2093 5700 	 sts 87,r18
+ 447 01a4 E895      	 spm
+ 448               	 
+ 449               	 
+ 450               	 
+ 451               	.L27:
  172:main.c        **** 
- 255               	 .loc 1 172 0
- 256 011e 07B6      	 in __tmp_reg__,0x37
- 257 0120 00FC      	 sbrc __tmp_reg__,0
- 258 0122 00C0      	 rjmp .L29
- 259 0124 A0E0      	 ldi r26,lo8(buf)
- 260 0126 B0E0      	 ldi r27,hi8(buf)
- 261               	.LBB29:
+ 453               	.LM51:
+ 454 01a6 07B6      	 in __tmp_reg__,0x37
+ 455 01a8 00FC      	 sbrc __tmp_reg__,0
+ 456 01aa 00C0      	 rjmp .L27
+ 457 01ac A0E0      	 ldi r26,lo8(buf)
+ 458 01ae B0E0      	 ldi r27,hi8(buf)
+ 459 01b0 40E0      	 ldi r20,lo8(buf+128)
+ 460 01b2 50E0      	 ldi r21,hi8(buf+128)
+ 461 01b4 FC01      	 movw r30,r24
+ 462               	.LBB35:
  177:main.c        **** 
- 262               	 .loc 1 177 0
- 263 0128 41E0      	 ldi r20,lo8(1)
- 264 012a BC01      	 movw r22,r24
- 265 012c 6050      	 subi r22,lo8(buf)
- 266 012e 7040      	 sbci r23,hi8(buf)
- 267               	.LVL8:
- 268               	.L30:
+ 464               	.LM52:
+ 465 01b6 61E0      	 ldi r22,lo8(1)
+ 466               	.L28:
  175:main.c        **** 		data |= *p++ << 8;
- 269               	 .loc 1 175 0
- 270 0130 2C91      	 ld r18,X
- 271               	.LVL9:
+ 468               	.LM53:
+ 469 01b8 2C91      	 ld r18,X
+ 176:main.c        **** 		boot_page_fill(addr, data);
+ 471               	.LM54:
+ 472 01ba 1196      	 adiw r26,1
+ 473 01bc 3C91      	 ld r19,X
+ 474 01be 1197      	 sbiw r26,1
  177:main.c        **** 
- 272               	 .loc 1 177 0
- 273 0132 FB01      	 movw r30,r22
- 274 0134 EA0F      	 add r30,r26
- 275 0136 FB1F      	 adc r31,r27
- 276 0138 1196      	 adiw r26,1
- 277 013a 5C91      	 ld r21,X
- 278 013c 1197      	 sbiw r26,1
- 279 013e 30E0      	 ldi r19,0
- 280 0140 352B      	 or r19,r21
- 281               	 
- 282               	 
- 283 0142 0901      	 movw r0,r18
- 284 0144 4093 5700 	 sts 87,r20
- 285 0148 E895      	 spm
- 286 014a 1124      	 clr r1
- 287               	 
- 288               	 
- 289               	.LVL10:
- 290               	 
- 291 014c 1296      	 adiw r26,2
- 292               	.LVL11:
- 293               	.LBE29:
+ 476               	.LM55:
+ 477               	 
+ 478               	 
+ 479 01c0 0901      	 movw r0,r18
+ 480 01c2 6093 5700 	 sts 87,r22
+ 481 01c6 E895      	 spm
+ 482 01c8 1124      	 clr r1
+ 483               	 
+ 484               	 
+ 485               	 
+ 486 01ca 3296      	 adiw r30,2
+ 487 01cc 1296      	 adiw r26,2
+ 488               	.LBE35:
  181:main.c        **** 
- 294               	 .loc 1 181 0
- 295 014e F0E0      	 ldi r31,hi8(buf+128)
- 296 0150 A030      	 cpi r26,lo8(buf+128)
- 297 0152 BF07      	 cpc r27,r31
- 298 0154 01F4      	 brne .L30
- 299 0156 9C01      	 movw r18,r24
- 300               	.LVL12:
- 301 0158 2058      	 subi r18,-128
- 302 015a 3F4F      	 sbci r19,-1
- 303 015c 3093 0000 	 sts addr+1,r19
- 304 0160 2093 0000 	 sts addr,r18
+ 490               	.LM56:
+ 491 01ce 4A17      	 cp r20,r26
+ 492 01d0 5B07      	 cpc r21,r27
+ 493 01d2 01F4      	 brne .L28
+ 494 01d4 9C01      	 movw r18,r24
+ 495 01d6 2058      	 subi r18,-128
+ 496 01d8 3F4F      	 sbci r19,-1
+ 497 01da 3093 0000 	 sts addr+1,r19
+ 498 01de 2093 0000 	 sts addr,r18
  183:main.c        **** 	boot_spm_busy_wait();
- 305               	 .loc 1 183 0
- 306 0164 25E0      	 ldi r18,lo8(5)
- 307 0166 FC01      	 movw r30,r24
- 308               	 
- 309               	 
- 310 0168 2093 5700 	 sts 87,r18
- 311 016c E895      	 spm
- 312               	 
- 313               	 
- 314               	 
- 315               	.L31:
- 184:main.c        **** 	boot_rww_enable();
- 316               	 .loc 1 184 0
- 317 016e 07B6      	 in __tmp_reg__,0x37
- 318 0170 00FC      	 sbrc __tmp_reg__,0
- 319 0172 00C0      	 rjmp .L31
- 185:main.c        **** }
- 320               	 .loc 1 185 0
- 321 0174 81E1      	 ldi r24,lo8(17)
- 322               	.LVL13:
- 323               	 
- 324               	 
- 325 0176 8093 5700 	 sts 87,r24
- 326 017a E895      	 spm
- 327               	 
- 328               	 
- 329               	.LVL14:
- 330               	 
- 331               	.L18:
- 332               	.LBE28:
- 333               	.LBE27:
- 314:main.c        **** 			bcnt = 0;
- 334               	 .loc 1 314 0
- 335 017c 1092 0000 	 sts bcnt.2192,__zero_reg__
- 336 0180 80E0      	 ldi r24,0
- 337               	.LVL15:
- 338               	.L19:
- 315:main.c        **** 
- 316:main.c        **** 		TWCR1 |= (1<<TWINT) | ack;
- 339               	 .loc 1 316 0
- 340 0182 9091 DC00 	 lds r25,220
- 341               	.LVL16:
- 342 0186 9068      	 ori r25,lo8(-128)
- 343 0188 892B      	 or r24,r25
- 344 018a 00C0      	 rjmp .L60
- 345               	.LVL17:
- 346               	.L3:
- 317:main.c        **** 		break;
- 318:main.c        **** 
- 319:main.c        **** 	/* SLA+R received, ACK returned -> send data */
- 320:main.c        **** 	case 0xA8:
- 321:main.c        **** 		bcnt = 0;
- 347               	 .loc 1 321 0
- 348 018c 1092 0000 	 sts bcnt.2192,__zero_reg__
- 349               	.LVL18:
- 350               	.LBB31:
- 351               	.LBB32:
- 352               	.LBB33:
- 353               	 .loc 2 750 0
- 354 0190 7398      	 cbi 0xe,3
- 355               	.LVL19:
- 356               	.L9:
- 357               	.LBE33:
- 358               	.LBE32:
- 359               	.LBE31:
- 322:main.c        **** 		LED_RT_ON();
- 323:main.c        **** 
- 324:main.c        **** 	/* prev. SLA+R, data sent, ACK returned -> send data */
- 325:main.c        **** 	case 0xB8:
- 326:main.c        **** 		switch (cmd) {
- 360               	 .loc 1 326 0
- 361 0192 8091 0000 	 lds r24,cmd
- 362 0196 8231      	 cpi r24,lo8(18)
- 363 0198 01F0      	 breq .L33
- 364 019a 8232      	 cpi r24,lo8(34)
- 365 019c 01F0      	 breq .L34
- 366 019e 8130      	 cpi r24,lo8(1)
- 367 01a0 01F4      	 brne .L56
- 327:main.c        **** 		case CMD_READ_VERSION:
- 328:main.c        **** 			data = info[bcnt++];
- 368               	 .loc 1 328 0
- 369 01a2 8091 0000 	 lds r24,bcnt.2192
- 370 01a6 E82F      	 mov r30,r24
- 371 01a8 F0E0      	 ldi r31,0
- 372 01aa E050      	 subi r30,lo8(-(info))
- 373 01ac F040      	 sbci r31,hi8(-(info))
- 374 01ae E081      	 ld r30,Z
- 375               	.LVL20:
- 329:main.c        **** 			bcnt %= sizeof(info);
- 376               	 .loc 1 329 0
- 377 01b0 8F5F      	 subi r24,lo8(-(1))
- 378 01b2 8F70      	 andi r24,lo8(15)
- 379 01b4 00C0      	 rjmp .L57
- 380               	.LVL21:
- 381               	.L33:
- 330:main.c        **** 			break;
- 331:main.c        **** 
- 332:main.c        **** 		case CMD_READ_CHIPINFO:
- 333:main.c        **** 			data = chipinfo[bcnt++];
- 382               	 .loc 1 333 0
- 383 01b6 8091 0000 	 lds r24,bcnt.2192
- 384 01ba E82F      	 mov r30,r24
- 385 01bc F0E0      	 ldi r31,0
- 386 01be E050      	 subi r30,lo8(-(chipinfo))
- 387 01c0 F040      	 sbci r31,hi8(-(chipinfo))
- 388 01c2 E081      	 ld r30,Z
- 389               	.LVL22:
- 334:main.c        **** 			bcnt %= sizeof(chipinfo);
- 390               	 .loc 1 334 0
- 391 01c4 8F5F      	 subi r24,lo8(-(1))
- 392 01c6 8770      	 andi r24,lo8(7)
- 393               	.L57:
- 394 01c8 8093 0000 	 sts bcnt.2192,r24
- 335:main.c        **** 			break;
- 395               	 .loc 1 335 0
- 396 01cc 00C0      	 rjmp .L32
- 397               	.LVL23:
- 398               	.L34:
- 399               	.LBB34:
- 336:main.c        **** 
- 337:main.c        **** 		case CMD_READ_FLASH:
- 338:main.c        **** 			data = pgm_read_byte_near(addr++);
- 400               	 .loc 1 338 0
- 401 01ce E091 0000 	 lds r30,addr
- 402 01d2 F091 0000 	 lds r31,addr+1
- 403 01d6 CF01      	 movw r24,r30
- 404 01d8 0196      	 adiw r24,1
- 405 01da 9093 0000 	 sts addr+1,r25
- 406 01de 8093 0000 	 sts addr,r24
- 407               	.LVL24:
- 408               	 
- 409               	 
- 410 01e2 E491      	 lpm r30,Z
- 411               	 
- 412               	 
- 413               	.LVL25:
- 414               	 
- 415               	.LBE34:
- 339:main.c        **** 			break;
- 416               	 .loc 1 339 0
- 417 01e4 00C0      	 rjmp .L32
- 418               	.LVL26:
- 419               	.L56:
- 340:main.c        **** #if (EEPROM_SUPPORT)
- 341:main.c        **** 		case CMD_READ_EEPROM:
- 342:main.c        **** 			data = read_eeprom_byte();
- 343:main.c        **** 			break;
- 344:main.c        **** #endif
- 345:main.c        **** 		default:
- 346:main.c        **** 			data = 0xFF;
- 420               	 .loc 1 346 0
- 421 01e6 EFEF      	 ldi r30,lo8(-1)
- 422               	.L32:
- 423               	.LVL27:
- 347:main.c        **** 			break;
- 348:main.c        **** 		}
- 349:main.c        **** 
- 350:main.c        **** 		TWDR1 = data;
- 424               	 .loc 1 350 0
- 425 01e8 E093 DB00 	 sts 219,r30
- 426 01ec 00C0      	 rjmp .L61
- 427               	.LVL28:
- 428               	.L6:
- 429               	.LBB35:
- 430               	.LBB36:
- 431               	.LBB37:
- 748:port.h        **** 	} else {
- 432               	 .loc 2 748 0
- 433 01ee 739A      	 sbi 0xe,3
- 434               	.LVL29:
- 435               	.L61:
- 436               	.LBE37:
- 437               	.LBE36:
- 438               	.LBE35:
- 351:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWEA);
- 352:main.c        **** 		break;
- 353:main.c        **** 
- 354:main.c        **** 	/* STOP or repeated START */
- 355:main.c        **** 	case 0xA0:
- 356:main.c        **** 	/* data sent, NACK returned */
- 357:main.c        **** 	case 0xC0:
- 358:main.c        **** 		LED_RT_OFF();
- 359:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWEA);
- 439               	 .loc 1 359 0
- 440 01f0 8091 DC00 	 lds r24,220
- 441 01f4 806C      	 ori r24,lo8(-64)
- 442 01f6 00C0      	 rjmp .L60
- 443               	.L8:
- 360:main.c        **** 		break;
- 361:main.c        **** 
- 362:main.c        **** 	/* illegal state -> reset hardware */
- 363:main.c        **** 	case 0xF8:
- 364:main.c        **** 		TWCR1 |= (1<<TWINT) | (1<<TWSTO) | (1<<TWEA);
- 444               	 .loc 1 364 0
- 445 01f8 8091 DC00 	 lds r24,220
- 446 01fc 806D      	 ori r24,lo8(-48)
- 447               	.LVL30:
- 448               	.L60:
- 449 01fe 8093 DC00 	 sts 220,r24
- 365:main.c        **** 		break;
- 366:main.c        **** 	}
- 367:main.c        **** }
- 450               	 .loc 1 367 0
- 451 0202 00C0      	 rjmp .L1
- 452               	.LVL31:
- 453               	.L25:
- 454               	.LBB38:
- 455               	.LBB30:
- 172:main.c        **** 
- 456               	 .loc 1 172 0
- 457 0204 80E4      	 ldi r24,lo8(64)
- 458 0206 00C0      	 rjmp .L19
- 459               	.LVL32:
- 460               	.L1:
- 461               	 
- 462               	.LBE30:
- 463               	.LBE38:
- 464               	 .loc 1 367 0
- 465 0208 FF91      	 pop r31
- 466 020a EF91      	 pop r30
- 467 020c BF91      	 pop r27
- 468 020e AF91      	 pop r26
- 469 0210 9F91      	 pop r25
- 470 0212 8F91      	 pop r24
- 471 0214 7F91      	 pop r23
- 472 0216 6F91      	 pop r22
- 473 0218 5F91      	 pop r21
- 474 021a 4F91      	 pop r20
- 475 021c 3F91      	 pop r19
- 476 021e 2F91      	 pop r18
- 477 0220 0F90      	 pop r0
- 478 0222 0FBE      	 out __SREG__,r0
- 479 0224 0F90      	 pop r0
- 480 0226 1F90      	 pop r1
- 481 0228 1895      	 reti
- 482               	 .cfi_endproc
- 483               	.LFE107:
- 485               	 .section .text.__vector_16,"ax",@progbits
- 486               	.global __vector_16
- 488               	__vector_16:
- 489               	.LFB108:
- 368:main.c        **** 
- 369:main.c        **** ISR(TIMER0_OVF_vect)
- 370:main.c        **** {
- 490               	 .loc 1 370 0
- 491               	 .cfi_startproc
- 492 0000 1F92      	 push r1
- 493               	.LCFI14:
- 494               	 .cfi_def_cfa_offset 3
- 495               	 .cfi_offset 1,-2
- 496 0002 0F92      	 push r0
- 497               	.LCFI15:
- 498               	 .cfi_def_cfa_offset 4
- 499               	 .cfi_offset 0,-3
- 500 0004 0FB6      	 in r0,__SREG__
- 501 0006 0F92      	 push r0
- 502 0008 1124      	 clr __zero_reg__
- 503 000a 8F93      	 push r24
- 504               	.LCFI16:
- 505               	 .cfi_def_cfa_offset 5
- 506               	 .cfi_offset 24,-4
+ 500               	.LM57:
+ 501 01e2 25E0      	 ldi r18,lo8(5)
+ 502 01e4 FC01      	 movw r30,r24
+ 503               	 
+ 504               	 
+ 505 01e6 2093 5700 	 sts 87,r18
+ 506 01ea E895      	 spm
  507               	 
  508               	 
  509               	 
- 510               	.L__stack_usage =4
+ 510               	.L29:
+ 184:main.c        **** 	boot_rww_enable();
+ 512               	.LM58:
+ 513 01ec 07B6      	 in __tmp_reg__,0x37
+ 514 01ee 00FC      	 sbrc __tmp_reg__,0
+ 515 01f0 00C0      	 rjmp .L29
+ 185:main.c        **** }
+ 517               	.LM59:
+ 518 01f2 81E1      	 ldi r24,lo8(17)
+ 519               	 
+ 520               	 
+ 521 01f4 8093 5700 	 sts 87,r24
+ 522 01f8 E895      	 spm
+ 523               	 
+ 524               	 
+ 525               	 
+ 526 01fa 00C0      	 rjmp .L17
+ 527               	.L2:
+ 528               	.LBE34:
+ 529               	.LBE33:
+ 321:main.c        **** 		LED_RT_ON();
+ 531               	.LM60:
+ 532 01fc 1092 0000 	 sts bcnt.2091,__zero_reg__
+ 533               	.LBB36:
+ 534               	.LBB37:
+ 535               	.LBB38:
+ 537               	.Ltext3:
+ 539               	.LM61:
+ 540 0200 7398      	 cbi 0xe,3
+ 541 0202 00C0      	 rjmp .L9
+ 542               	.L32:
+ 543               	.LBE38:
+ 544               	.LBE37:
+ 545               	.LBE36:
+ 546 0204 8233      	 cpi r24,lo8(50)
+ 547 0206 01F0      	 breq .+2
+ 548 0208 00C0      	 rjmp .L58
+ 549               	.LBB39:
+ 550               	.LBB40:
+ 552               	.Ltext4:
+ 191:main.c        **** 	EEARH = (addr >> 8);
+ 554               	.LM62:
+ 555 020a 8091 0000 	 lds r24,addr
+ 556 020e 81BD      	 out 0x21,r24
+ 192:main.c        **** 	EECR |= (1<<EERE);
+ 558               	.LM63:
+ 559 0210 8091 0000 	 lds r24,addr+1
+ 192:main.c        **** 	EECR |= (1<<EERE);
+ 561               	.LM64:
+ 562 0214 82BD      	 out 0x22,r24
+ 193:main.c        **** 	addr++;
+ 564               	.LM65:
+ 565 0216 F89A      	 sbi 0x1f,0
+ 194:main.c        **** 	return EEDR;
+ 567               	.LM66:
+ 568 0218 8091 0000 	 lds r24,addr
+ 569 021c 9091 0000 	 lds r25,addr+1
+ 570 0220 0196      	 adiw r24,1
+ 571 0222 9093 0000 	 sts addr+1,r25
+ 572 0226 8093 0000 	 sts addr,r24
+ 195:main.c        **** }
+ 574               	.LM67:
+ 575 022a E0B5      	 in r30,0x20
+ 576               	.LBE40:
+ 577               	.LBE39:
+ 343:main.c        **** #endif
+ 579               	.LM68:
+ 580 022c 00C0      	 rjmp .L35
+ 581               	.L33:
+ 328:main.c        **** 			bcnt %= sizeof(info);
+ 583               	.LM69:
+ 584 022e 8091 0000 	 lds r24,bcnt.2091
+ 585 0232 E82F      	 mov r30,r24
+ 586 0234 F0E0      	 ldi r31,0
+ 328:main.c        **** 			bcnt %= sizeof(info);
+ 588               	.LM70:
+ 589 0236 E050      	 subi r30,lo8(-(info))
+ 590 0238 F040      	 sbci r31,hi8(-(info))
+ 591 023a E081      	 ld r30,Z
+ 328:main.c        **** 			bcnt %= sizeof(info);
+ 593               	.LM71:
+ 594 023c 8F5F      	 subi r24,lo8(-(1))
+ 329:main.c        **** 			break;
+ 596               	.LM72:
+ 597 023e 8F70      	 andi r24,lo8(15)
+ 598               	.L57:
+ 334:main.c        **** 			break;
+ 600               	.LM73:
+ 601 0240 8093 0000 	 sts bcnt.2091,r24
+ 335:main.c        **** 
+ 603               	.LM74:
+ 604 0244 00C0      	 rjmp .L35
+ 605               	.L34:
+ 333:main.c        **** 			bcnt %= sizeof(chipinfo);
+ 607               	.LM75:
+ 608 0246 8091 0000 	 lds r24,bcnt.2091
+ 609 024a E82F      	 mov r30,r24
+ 610 024c F0E0      	 ldi r31,0
+ 333:main.c        **** 			bcnt %= sizeof(chipinfo);
+ 612               	.LM76:
+ 613 024e E050      	 subi r30,lo8(-(chipinfo))
+ 614 0250 F040      	 sbci r31,hi8(-(chipinfo))
+ 615 0252 E081      	 ld r30,Z
+ 333:main.c        **** 			bcnt %= sizeof(chipinfo);
+ 617               	.LM77:
+ 618 0254 8F5F      	 subi r24,lo8(-(1))
+ 334:main.c        **** 			break;
+ 620               	.LM78:
+ 621 0256 8770      	 andi r24,lo8(7)
+ 622 0258 00C0      	 rjmp .L57
+ 623               	.L31:
+ 624               	.LBB41:
+ 338:main.c        **** 			break;
+ 626               	.LM79:
+ 627 025a E091 0000 	 lds r30,addr
+ 628 025e F091 0000 	 lds r31,addr+1
+ 629 0262 CF01      	 movw r24,r30
+ 630 0264 0196      	 adiw r24,1
+ 631 0266 9093 0000 	 sts addr+1,r25
+ 632 026a 8093 0000 	 sts addr,r24
+ 633               	 
+ 634               	 
+ 635 026e E491      	 lpm r30,Z
+ 636               	 
+ 637               	 
+ 638               	 
+ 639               	.LBE41:
+ 339:main.c        **** #if (EEPROM_SUPPORT)
+ 641               	.LM80:
+ 642 0270 00C0      	 rjmp .L35
+ 643               	.L5:
+ 644               	.LBB42:
+ 645               	.LBB43:
+ 646               	.LBB44:
+ 648               	.Ltext5:
+ 748:port.h        **** 	} else {
+ 650               	.LM81:
+ 651 0272 739A      	 sbi 0xe,3
+ 652 0274 00C0      	 rjmp .L61
+ 653               	.L8:
+ 654               	.LBE44:
+ 655               	.LBE43:
+ 656               	.LBE42:
+ 658               	.Ltext6:
+ 364:main.c        **** 		break;
+ 660               	.LM82:
+ 661 0276 8091 DC00 	 lds r24,220
+ 662 027a 806D      	 ori r24,lo8(-48)
+ 663 027c 00C0      	 rjmp .L59
+ 664               	 __gcc_isr 0,r18
+ 676               	.Lscope1:
+ 678               	 .stabd 78,0,0
+ 679               	 .section .text.__vector_16,"ax",@progbits
+ 681               	.global __vector_16
+ 683               	__vector_16:
+ 684               	 .stabd 46,0,0
+ 368:main.c        **** 
+ 369:main.c        **** ISR(TIMER0_OVF_vect)
+ 370:main.c        **** {
+ 686               	.LM83:
+ 687               	.LFBB2:
+ 688 0000 8F93 8FB7 	 __gcc_isr 1
+ 688      8F93 
+ 689               	 
+ 690               	 
+ 691               	 
+ 692               	.L__stack_usage =0+__gcc_isr.n_pushed
  371:main.c        **** 	/* restart timer */
  372:main.c        **** 	TCNT0 = TIMER_RELOAD;
- 511               	 .loc 1 372 0
- 512 000c 8CE3      	 ldi r24,lo8(60)
- 513 000e 86BD      	 out 0x26,r24
- 514               	.LVL33:
- 515               	.LBB39:
- 516               	.LBB40:
- 517               	.LBB41:
+ 694               	.LM84:
+ 695 0006 8CE3      	 ldi r24,lo8(60)
+ 696 0008 86BD      	 out 0x26,r24
+ 697               	.LBB45:
+ 698               	.LBB46:
+ 699               	.LBB47:
+ 701               	.Ltext7:
  751:port.h        **** 	}
  752:port.h        **** }
  753:port.h        **** 
@@ -1696,13 +1710,13 @@
  776:port.h        **** static inline void PORTE_toggle_pin_level(const uint8_t pin)
  777:port.h        **** {
  778:port.h        **** 	PINE = 1 << pin;
- 518               	 .loc 2 778 0
- 519 0010 88E0      	 ldi r24,lo8(8)
- 520 0012 8CB9      	 out 0xc,r24
- 521               	.LVL34:
- 522               	.LBE41:
- 523               	.LBE40:
- 524               	.LBE39:
+ 703               	.LM85:
+ 704 000a 88E0      	 ldi r24,lo8(8)
+ 705 000c 8CB9      	 out 0xc,r24
+ 706               	.LBE47:
+ 707               	.LBE46:
+ 708               	.LBE45:
+ 710               	.Ltext8:
  373:main.c        **** 
  374:main.c        **** 	/* blink LED while running */
  375:main.c        **** 	LED_GN_TOGGLE();
@@ -1710,42 +1724,44 @@
  377:main.c        **** 
  378:main.c        **** 	/* count down for app-boot */
  379:main.c        **** 	if (boot_timeout > 1)
- 525               	 .loc 1 379 0
- 526 0014 8091 0000 	 lds r24,boot_timeout
- 527 0018 8230      	 cpi r24,lo8(2)
- 528 001a 00F0      	 brlo .L64
+ 712               	.LM86:
+ 713 000e 8091 0000 	 lds r24,boot_timeout
+ 715               	.LM87:
+ 716 0012 8230      	 cpi r24,lo8(2)
+ 717 0014 00F0      	 brlo .L63
  380:main.c        **** 		boot_timeout--;
- 529               	 .loc 1 380 0
- 530 001c 8150      	 subi r24,lo8(-(-1))
- 531 001e 8093 0000 	 sts boot_timeout,r24
- 532 0022 00C0      	 rjmp .L63
- 533               	.L64:
+ 719               	.LM88:
+ 720 0016 8150      	 subi r24,lo8(-(-1))
+ 721 0018 8093 0000 	 sts boot_timeout,r24
+ 722               	.L62:
+ 723               	 
  381:main.c        **** 
  382:main.c        **** 	/* trigger app-boot */
  383:main.c        **** 	else if (boot_timeout == 1)
- 534               	 .loc 1 383 0
- 535 0024 8130      	 cpi r24,lo8(1)
- 536 0026 01F4      	 brne .L63
  384:main.c        **** 		cmd = CMD_BOOT_APPLICATION;
- 537               	 .loc 1 384 0
- 538 0028 81E2      	 ldi r24,lo8(33)
- 539 002a 8093 0000 	 sts cmd,r24
- 540               	.L63:
- 541               	 
  385:main.c        **** }
- 542               	 .loc 1 385 0
- 543 002e 8F91      	 pop r24
- 544 0030 0F90      	 pop r0
- 545 0032 0FBE      	 out __SREG__,r0
- 546 0034 0F90      	 pop r0
- 547 0036 1F90      	 pop r1
- 548 0038 1895      	 reti
- 549               	 .cfi_endproc
- 550               	.LFE108:
- 552               	 .section .init3,"ax",@progbits
- 553               	.global disable_wdt_timer
- 555               	disable_wdt_timer:
- 556               	.LFB109:
+ 725               	.LM89:
+ 726 001c 8F91 8FBF 	 __gcc_isr 2
+ 726      8F91 
+ 727 0022 1895      	 reti
+ 728               	.L63:
+ 383:main.c        **** 		cmd = CMD_BOOT_APPLICATION;
+ 730               	.LM90:
+ 731 0024 8130      	 cpi r24,lo8(1)
+ 732 0026 01F4      	 brne .L62
+ 384:main.c        **** }
+ 734               	.LM91:
+ 735 0028 81E2      	 ldi r24,lo8(33)
+ 736 002a 8093 0000 	 sts cmd,r24
+ 738               	.LM92:
+ 739 002e 00C0      	 rjmp .L62
+ 740               	 __gcc_isr 0,r24
+ 742               	.Lscope2:
+ 744               	 .stabd 78,0,0
+ 745               	 .section .init3,"ax",@progbits
+ 747               	.global disable_wdt_timer
+ 749               	disable_wdt_timer:
+ 750               	 .stabd 46,0,0
  386:main.c        **** 
  387:main.c        **** static void (*jump_to_app)(void) __attribute__ ((noreturn)) = 0x0000;
  388:main.c        **** 
@@ -1758,68 +1774,67 @@
  395:main.c        **** void disable_wdt_timer(void) __attribute__((naked, section(".init3")));
  396:main.c        **** void disable_wdt_timer(void)
  397:main.c        **** {
- 557               	 .loc 1 397 0
- 558               	 .cfi_startproc
- 559               	 
- 560               	 
- 561               	 
- 562               	.L__stack_usage =0
+ 752               	.LM93:
+ 753               	.LFBB3:
+ 754               	 
+ 755               	 
+ 756               	 
+ 757               	.L__stack_usage =0
  398:main.c        **** 	MCUSR = 0;
- 563               	 .loc 1 398 0
- 564 0000 14BE      	 out 0x34,__zero_reg__
+ 759               	.LM94:
+ 760 0000 14BE      	 out 0x34,__zero_reg__
  399:main.c        **** 	WDTCSR = (1<<WDCE) | (1<<WDE);
- 565               	 .loc 1 399 0
- 566 0002 E0E6      	 ldi r30,lo8(96)
- 567 0004 F0E0      	 ldi r31,0
- 568 0006 88E1      	 ldi r24,lo8(24)
- 569 0008 8083      	 st Z,r24
+ 762               	.LM95:
+ 763 0002 E0E6      	 ldi r30,lo8(96)
+ 764 0004 F0E0      	 ldi r31,0
+ 765 0006 88E1      	 ldi r24,lo8(24)
+ 766 0008 8083      	 st Z,r24
  400:main.c        **** 	WDTCSR = (0<<WDE);
- 570               	 .loc 1 400 0
- 571 000a 1082      	 st Z,__zero_reg__
- 572               	 
+ 768               	.LM96:
+ 769 000a 1082      	 st Z,__zero_reg__
+ 770               	 
  401:main.c        **** }
- 573               	 .loc 1 401 0
- 574               	 .cfi_endproc
- 575               	.LFE109:
- 577               	 .section .text.startup.main,"ax",@progbits
- 578               	.global main
- 580               	main:
- 581               	.LFB110:
+ 772               	.LM97:
+ 774               	.Lscope3:
+ 776               	 .stabd 78,0,0
+ 777               	 .section .text.startup.main,"ax",@progbits
+ 779               	.global main
+ 781               	main:
+ 782               	 .stabd 46,0,0
  402:main.c        **** #endif 
  403:main.c        **** 
  404:main.c        **** int main(void) __attribute__ ((noreturn));
  405:main.c        **** int main(void)
  406:main.c        **** {
- 582               	 .loc 1 406 0
- 583               	 .cfi_startproc
- 584               	 
- 585               	 
- 586               	 
- 587               	.L__stack_usage =0
+ 784               	.LM98:
+ 785               	.LFBB4:
+ 786               	 
+ 787               	 
+ 788               	 
+ 789               	.L__stack_usage =0
  407:main.c        ****     port_init();
- 588               	 .loc 1 407 0
- 589 0000 0E94 0000 	 call port_init
- 590               	.LVL35:
- 591               	.LBB54:
- 592               	.LBB55:
- 593               	.LBB56:
+ 791               	.LM99:
+ 792 0000 0E94 0000 	 call port_init
+ 793               	.LBB60:
+ 794               	.LBB61:
+ 795               	.LBB62:
+ 797               	.Ltext9:
  705:port.h        **** 		break;
- 594               	 .loc 2 705 0
- 595 0004 6B9A      	 sbi 0xd,3
- 596               	.LVL36:
- 597               	.LBE56:
- 598               	.LBE55:
- 599               	.LBE54:
- 600               	.LBB57:
- 601               	.LBB58:
- 602               	.LBB59:
+ 799               	.LM100:
+ 800 0004 6B9A      	 sbi 0xd,3
+ 801               	.LBE62:
+ 802               	.LBE61:
+ 803               	.LBE60:
+ 804               	.LBB63:
+ 805               	.LBB64:
+ 806               	.LBB65:
  750:port.h        **** 	}
- 603               	 .loc 2 750 0
- 604 0006 7398      	 cbi 0xe,3
- 605               	.LVL37:
- 606               	.LBE59:
- 607               	.LBE58:
- 608               	.LBE57:
+ 808               	.LM101:
+ 809 0006 7398      	 cbi 0xe,3
+ 810               	.LBE65:
+ 811               	.LBE64:
+ 812               	.LBE63:
+ 814               	.Ltext10:
  408:main.c        **** 
  409:main.c        **** 	LED_INIT();
  410:main.c        **** 	LED_GN_ON();
@@ -1827,172 +1842,168 @@
  412:main.c        **** 	/* move interrupt-vectors to bootloader */
  413:main.c        **** 	/* timer0: running with F_CPU/1024, OVF interrupt */
  414:main.c        **** 	MCUCR = (1<<IVCE);
- 609               	 .loc 1 414 0
- 610 0008 81E0      	 ldi r24,lo8(1)
- 611 000a 85BF      	 out 0x35,r24
+ 816               	.LM102:
+ 817 0008 81E0      	 ldi r24,lo8(1)
+ 818 000a 85BF      	 out 0x35,r24
  415:main.c        **** 	MCUCR = (1<<IVSEL);
- 612               	 .loc 1 415 0
- 613 000c 92E0      	 ldi r25,lo8(2)
- 614 000e 95BF      	 out 0x35,r25
+ 820               	.LM103:
+ 821 000c 92E0      	 ldi r25,lo8(2)
+ 822 000e 95BF      	 out 0x35,r25
  416:main.c        **** 
  417:main.c        **** 	TCCR0B = (1<<CS02) | (1<<CS00);
- 615               	 .loc 1 417 0
- 616 0010 95E0      	 ldi r25,lo8(5)
- 617 0012 95BD      	 out 0x25,r25
+ 824               	.LM104:
+ 825 0010 95E0      	 ldi r25,lo8(5)
+ 826 0012 95BD      	 out 0x25,r25
  418:main.c        **** 	TIMSK0 = (1<<TOIE0);
- 618               	 .loc 1 418 0
- 619 0014 8093 6E00 	 sts 110,r24
+ 828               	.LM105:
+ 829 0014 8093 6E00 	 sts 110,r24
  419:main.c        **** 
  420:main.c        **** 	/* TWI init: set address, auto ACKs with interrupts */
  421:main.c        **** 	TWAR1 = (TWI_ADDRESS<<1);
- 620               	 .loc 1 421 0
- 621 0018 8EE0      	 ldi r24,lo8(14)
- 622 001a 8093 DA00 	 sts 218,r24
+ 831               	.LM106:
+ 832 0018 80E1      	 ldi r24,lo8(16)
+ 833 001a 8093 DA00 	 sts 218,r24
  422:main.c        **** 	TWCR1 = (1<<TWEA) | (1<<TWEN) | (1<<TWIE);
- 623               	 .loc 1 422 0
- 624 001e 85E4      	 ldi r24,lo8(69)
- 625 0020 8093 DC00 	 sts 220,r24
+ 835               	.LM107:
+ 836 001e 85E4      	 ldi r24,lo8(69)
+ 837 0020 8093 DC00 	 sts 220,r24
  423:main.c        **** 
  424:main.c        **** 	sei();
- 626               	 .loc 1 424 0
- 627               	 
- 628               	 
- 629 0024 7894      	 sei
- 630               	 
- 631               	 
- 632               	.L68:
+ 839               	.LM108:
+ 840               	 
+ 841               	 
+ 842 0024 7894      	 sei
+ 843               	 
+ 844               	 
+ 845               	.L67:
  425:main.c        **** 	while (cmd != CMD_BOOT_APPLICATION);
- 633               	 .loc 1 425 0 discriminator 1
- 634 0026 8091 0000 	 lds r24,cmd
- 635 002a 8132      	 cpi r24,lo8(33)
- 636 002c 01F4      	 brne .L68
+ 847               	.LM109:
+ 848 0026 8091 0000 	 lds r24,cmd
+ 850               	.LM110:
+ 851 002a 8132      	 cpi r24,lo8(33)
+ 852 002c 01F4      	 brne .L67
  426:main.c        **** 
  427:main.c        **** 	cli();
- 637               	 .loc 1 427 0
- 638               	 
- 639               	 
- 640 002e F894      	 cli
- 641               	 
+ 854               	.LM111:
+ 855               	 
+ 856               	 
+ 857 002e F894      	 cli
+ 858               	 
  428:main.c        **** 
  429:main.c        **** 	/* Disable TWI but keep address! */
  430:main.c        **** 	TWCR1 = 0x00;
- 642               	 .loc 1 430 0
- 643               	 
- 644 0030 1092 DC00 	 sts 220,__zero_reg__
+ 860               	.LM112:
+ 861               	 
+ 862 0030 1092 DC00 	 sts 220,__zero_reg__
  431:main.c        **** 
  432:main.c        **** 	/* disable timer0 */
  433:main.c        **** 	/* move interrupt vectors back to application */
  434:main.c        **** 	TIMSK0 = 0x00;
- 645               	 .loc 1 434 0
- 646 0034 1092 6E00 	 sts 110,__zero_reg__
+ 864               	.LM113:
+ 865 0034 1092 6E00 	 sts 110,__zero_reg__
  435:main.c        **** 	TCCR0B = 0x00;
- 647               	 .loc 1 435 0
- 648 0038 15BC      	 out 0x25,__zero_reg__
+ 867               	.LM114:
+ 868 0038 15BC      	 out 0x25,__zero_reg__
  436:main.c        **** 
  437:main.c        **** 	MCUCR = (1<<IVCE);
- 649               	 .loc 1 437 0
- 650 003a 81E0      	 ldi r24,lo8(1)
- 651 003c 85BF      	 out 0x35,r24
+ 870               	.LM115:
+ 871 003a 81E0      	 ldi r24,lo8(1)
+ 872 003c 85BF      	 out 0x35,r24
  438:main.c        **** 	MCUCR = (0<<IVSEL);
- 652               	 .loc 1 438 0
- 653 003e 15BE      	 out 0x35,__zero_reg__
- 654               	.LVL38:
- 655               	.LBB60:
- 656               	.LBB61:
- 657               	.LBB62:
+ 874               	.LM116:
+ 875 003e 15BE      	 out 0x35,__zero_reg__
+ 876               	.LBB66:
+ 877               	.LBB67:
+ 878               	.LBB68:
+ 880               	.Ltext11:
  748:port.h        **** 	} else {
- 658               	 .loc 2 748 0
- 659 0040 739A      	 sbi 0xe,3
- 660               	.LBE62:
- 661               	.LBE61:
- 662               	.LBE60:
+ 882               	.LM117:
+ 883 0040 739A      	 sbi 0xe,3
+ 884               	.LBE68:
+ 885               	.LBE67:
+ 886               	.LBE66:
+ 888               	.Ltext12:
  439:main.c        **** 
  440:main.c        **** 	LED_OFF();
  441:main.c        **** 
  442:main.c        **** 	uint16_t wait = 0x0000;
- 663               	 .loc 1 442 0
- 664 0042 E0E0      	 ldi r30,0
- 665 0044 F0E0      	 ldi r31,0
- 666               	.L69:
- 667               	.LVL39:
+ 890               	.LM118:
+ 891 0042 F0E0      	 ldi r31,0
+ 892 0044 E0E0      	 ldi r30,0
+ 893               	.L68:
  443:main.c        **** 	do {
  444:main.c        **** 		__asm volatile ("nop");
- 668               	 .loc 1 444 0 discriminator 1
- 669               	 
- 670               	 
- 671 0046 0000      	 nop
- 672               	 
+ 895               	.LM119:
+ 896               	 
+ 897               	 
+ 898 0046 0000      	 nop
+ 899               	 
  445:main.c        **** 	} while (--wait);
- 673               	 .loc 1 445 0 discriminator 1
- 674               	 
- 675 0048 3197      	 sbiw r30,1
- 676               	.LVL40:
- 677 004a 01F4      	 brne .L69
+ 901               	.LM120:
+ 902               	 
+ 903 0048 3197      	 sbiw r30,1
+ 904 004a 01F4      	 brne .L68
  446:main.c        **** 
  447:main.c        **** 	jump_to_app();
- 678               	 .loc 1 447 0
- 679 004c 0995      	 icall
- 680               	.LVL41:
- 681               	 .cfi_endproc
- 682               	.LFE110:
- 684               	 .section .bss.bcnt.2192,"aw",@nobits
- 687               	bcnt.2192:
- 688 0000 00        	 .zero 1
- 689               	 .section .bss.addr,"aw",@nobits
- 692               	addr:
- 693 0000 0000      	 .zero 2
- 694               	 .section .bss.buf,"aw",@nobits
- 697               	buf:
- 698 0000 0000 0000 	 .zero 128
- 698      0000 0000 
- 698      0000 0000 
- 698      0000 0000 
- 698      0000 0000 
- 699               	 .section .bss.cmd,"aw",@nobits
- 702               	cmd:
- 703 0000 00        	 .zero 1
- 704               	 .section .data.boot_timeout,"aw",@progbits
- 707               	boot_timeout:
- 708 0000 28        	 .byte 40
- 709               	 .section .rodata.chipinfo,"a",@progbits
- 712               	chipinfo:
- 713 0000 1E        	 .byte 30
- 714 0001 95        	 .byte -107
- 715 0002 16        	 .byte 22
- 716 0003 80        	 .byte -128
- 717 0004 7C        	 .byte 124
- 718 0005 00        	 .byte 0
- 719 0006 00        	 .byte 0
- 720 0007 00        	 .byte 0
- 721               	 .section .rodata.info,"a",@progbits
- 724               	info:
- 725 0000 4D44 424F 	 .string "MDBOOT328PBv2.1"
- 725      4F54 3332 
- 725      3850 4276 
- 725      322E 3100 
- 726               	 .text
- 727               	.Letext0:
- 728               	 .file 3 "c:\\program files (x86)\\atmel\\studio\\7.0\\toolchain\\avr8\\avr8-gnu-toolchain\\avr\\include\\stdint.h"
- 729               	 .file 4 "atmel_start_pins.h"
- 730               	 .file 5 "port_init.h"
+ 906               	.LM121:
+ 907 004c 0995      	 icall
+ 912               	.Lscope4:
+ 914               	 .stabd 78,0,0
+ 915               	 .section .bss.bcnt.2091,"aw",@nobits
+ 918               	bcnt.2091:
+ 919 0000 00        	 .zero 1
+ 921               	 .section .bss.addr,"aw",@nobits
+ 924               	addr:
+ 925 0000 0000      	 .zero 2
+ 927               	 .section .bss.buf,"aw",@nobits
+ 930               	buf:
+ 931 0000 0000 0000 	 .zero 128
+ 931      0000 0000 
+ 931      0000 0000 
+ 931      0000 0000 
+ 931      0000 0000 
+ 933               	 .section .bss.cmd,"aw",@nobits
+ 936               	cmd:
+ 937 0000 00        	 .zero 1
+ 939               	 .section .data.boot_timeout,"aw"
+ 942               	boot_timeout:
+ 943 0000 28        	 .byte 40
+ 945               	 .section .rodata.chipinfo,"a"
+ 948               	chipinfo:
+ 949 0000 1E95 1680 	 .string "\036\225\026\200x"
+ 949      7800 
+ 950 0006 0400      	 .string "\004"
+ 952               	 .section .rodata.info,"a"
+ 955               	info:
+ 956 0000 4B4C 424F 	 .string "KLBOOT328PBv2.1"
+ 956      4F54 3332 
+ 956      3850 4276 
+ 956      322E 3100 
+ 958               	 .text
+ 960               	.Letext0:
+ 961               	 .ident "GCC: (GNU) 9.1.0"
+ 962               	.global __do_copy_data
+ 963               	.global __do_clear_bss
 DEFINED SYMBOLS
-                            *ABS*:00000000 main.c
-    {standard input}:2      *ABS*:0000003e __SP_H__
-    {standard input}:3      *ABS*:0000003d __SP_L__
-    {standard input}:4      *ABS*:0000003f __SREG__
-    {standard input}:5      *ABS*:00000000 __tmp_reg__
-    {standard input}:6      *ABS*:00000001 __zero_reg__
-    {standard input}:13     .text.__vector_40:00000000 __vector_40
-    {standard input}:687    .bss.bcnt.2192:00000000 bcnt.2192
-    {standard input}:692    .bss.addr:00000000 addr
-    {standard input}:707    .data.boot_timeout:00000000 boot_timeout
-    {standard input}:702    .bss.cmd:00000000 cmd
-    {standard input}:697    .bss.buf:00000000 buf
-    {standard input}:724    .rodata.info:00000000 info
-    {standard input}:712    .rodata.chipinfo:00000000 chipinfo
-    {standard input}:488    .text.__vector_16:00000000 __vector_16
-    {standard input}:555    .init3:00000000 disable_wdt_timer
-    {standard input}:580    .text.startup.main:00000000 main
+                            *ABS*:0000000000000000 main.c
+    {standard input}:2      *ABS*:000000000000003e __SP_H__
+    {standard input}:3      *ABS*:000000000000003d __SP_L__
+    {standard input}:4      *ABS*:000000000000003f __SREG__
+    {standard input}:5      *ABS*:0000000000000000 __tmp_reg__
+    {standard input}:6      *ABS*:0000000000000001 __zero_reg__
+    {standard input}:125    .text.__vector_40:0000000000000000 __vector_40
+                            *ABS*:0000000000000004 __gcc_isr.n_pushed.001
+    {standard input}:936    .bss.cmd:0000000000000000 cmd
+    {standard input}:918    .bss.bcnt.2091:0000000000000000 bcnt.2091
+    {standard input}:924    .bss.addr:0000000000000000 addr
+    {standard input}:942    .data.boot_timeout:0000000000000000 boot_timeout
+    {standard input}:930    .bss.buf:0000000000000000 buf
+    {standard input}:955    .rodata.info:0000000000000000 info
+    {standard input}:948    .rodata.chipinfo:0000000000000000 chipinfo
+    {standard input}:683    .text.__vector_16:0000000000000000 __vector_16
+                            *ABS*:0000000000000002 __gcc_isr.n_pushed.002
+    {standard input}:749    .init3:0000000000000000 disable_wdt_timer
+    {standard input}:781    .text.startup.main:0000000000000000 main
 
 UNDEFINED SYMBOLS
 port_init
